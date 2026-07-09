@@ -11,5 +11,24 @@ config_version=5
 [application]
 
 config/name="Chromodulus"
-config/features=PackedStringArray("4.5", "Forward Plus")
+config/features=PackedStringArray("4.5", "Compatibility")
 config/icon="res://icon.svg"
+run/main_scene="res://scenes/Main.tscn"
+
+[autoload]
+
+ColorRules="*res://scripts/color_rules.gd"
+Deck="*res://scripts/deck.gd"
+GameState="*res://scripts/game_state.gd"
+
+[display]
+
+window/size/viewport_width=1400
+window/size/viewport_height=900
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

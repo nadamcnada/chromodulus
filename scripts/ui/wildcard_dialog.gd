@@ -19,6 +19,7 @@ func _ready() -> void:
 	size = Vector2i(380, 320)
 	unresizable = true
 	exclusive = true
+	visible = false
 	close_requested.connect(_on_cancel_pressed)
 
 

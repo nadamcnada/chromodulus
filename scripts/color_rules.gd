@@ -13,6 +13,10 @@ const ALL_CELL_COLORS: Array[String] = ["R", "G", "B", "W", "Y", "P", "A"]
 const STARTING_COLORS: Array[String] = ["R", "G", "B", "W"]
 const PLAYABLE_ADDED_COLORS: Array[String] = ["R", "G", "B"]
 
+# Used to outline scoring-pattern cells on the grid and the currently
+# selected square in hand.
+const HIGHLIGHT_ORANGE := Color(1.0, 0.55, 0.0)
+
 const NAMES: Dictionary = {
 	"R": "Red",
 	"G": "Green",

@@ -1,10 +1,12 @@
 extends Node
 ##
-## GameState: the authoritative Chromodulus "Base" game engine.
+## GameState: the authoritative Chromodulus Classic game engine.
 ##
-## Owns the 7x7 grid, the current hand, Turn-10 Mode bookkeeping, wildcard
-## interactions and a 10-step undo history. UI code should only mutate the
-## game through the public methods here so that undo snapshots stay correct.
+## Owns the 7x7 grid, the current hand, and the draw sequence: four 10-card
+## draws (play up to 7, then advance with Next Draw) followed by a fifth and
+## final 10-card draw (play any/all, then End Game). Undo works per-draw: it
+## discards everything played since the previous draw began and returns you
+## to that draw's freshly dealt hand.
 
 signal state_changed
 signal message(text: String)
@@ -12,17 +14,12 @@ signal game_over(result: Dictionary)
 
 const GRID_SIZE := 7
 const MAX_PLAYS_PER_DRAW := 7
-const MAX_DISCARDS_PER_DRAW := 5
-const MIN_DISCARDS_PER_DRAW := 3
-const MAX_UNDO_STEPS := 10
+const DRAW_SIZE := 10
 
 var grid: Array = []            # grid[row][col] = {"color":String,"number":int}
 var hand: Array[Dictionary] = []
 var draw_number: int = 1        # 1..5
 var played_this_draw: int = 0
-var discards_this_draw: int = 0
-var total_discards_first_four: int = 0
-var final_draw_size: int = 0
 var phase: String = "DRAWING"   # DRAWING | FINAL_DRAW | GAME_OVER
 var pending_invert_id: int = -1
 var last_result: Dictionary = {}
@@ -42,15 +39,9 @@ func new_game() -> void:
 			row.append(_random_cell())
 		grid.append(row)
 	_history.clear()
-	draw_number = 1
-	played_this_draw = 0
-	discards_this_draw = 0
-	total_discards_first_four = 0
-	final_draw_size = 0
-	phase = "DRAWING"
 	pending_invert_id = -1
 	last_result = {}
-	hand = Deck.draw_many(10)
+	_deal_draw(1, "DRAWING")
 	state_changed.emit()
 
 
@@ -58,6 +49,17 @@ func _random_cell() -> Dictionary:
 	var color: String = ColorRules.STARTING_COLORS[randi() % ColorRules.STARTING_COLORS.size()]
 	var number: int = randi() % 10
 	return {"color": color, "number": number}
+
+
+## Deals a fresh hand for the given draw number/phase and checkpoints the
+## resulting state so Undo can return here later.
+func _deal_draw(new_draw_number: int, new_phase: String) -> void:
+	draw_number = new_draw_number
+	phase = new_phase
+	played_this_draw = 0
+	pending_invert_id = -1
+	hand = Deck.draw_many(DRAW_SIZE)
+	_history.append(_snapshot())
 
 
 # ---------------------------------------------------------------------------
@@ -70,40 +72,30 @@ func _snapshot() -> Dictionary:
 		"hand": hand.duplicate(true),
 		"draw_number": draw_number,
 		"played_this_draw": played_this_draw,
-		"discards_this_draw": discards_this_draw,
-		"total_discards_first_four": total_discards_first_four,
-		"final_draw_size": final_draw_size,
 		"phase": phase,
 		"pending_invert_id": pending_invert_id,
-		"last_result": last_result.duplicate(true),
 	}
 
 
-func _push_undo() -> void:
-	_history.append(_snapshot())
-	if _history.size() > MAX_UNDO_STEPS:
-		_history.pop_front()
-
-
 func can_undo() -> bool:
-	return not _history.is_empty()
+	return _history.size() > 1
 
 
+## Discards everything played since the previous draw began and returns to
+## that draw's freshly dealt hand.
 func undo() -> bool:
-	if _history.is_empty():
+	if not can_undo():
 		message.emit("Nothing to undo.")
 		return false
-	var snap: Dictionary = _history.pop_back()
+	_history.pop_back()
+	var snap: Dictionary = _history[_history.size() - 1]
 	grid = snap["grid"].duplicate(true)
 	hand = snap["hand"].duplicate(true)
 	draw_number = snap["draw_number"]
 	played_this_draw = snap["played_this_draw"]
-	discards_this_draw = snap["discards_this_draw"]
-	total_discards_first_four = snap["total_discards_first_four"]
-	final_draw_size = snap["final_draw_size"]
 	phase = snap["phase"]
 	pending_invert_id = snap["pending_invert_id"]
-	last_result = snap["last_result"].duplicate(true)
+	last_result = {}
 	state_changed.emit()
 	return true
 
@@ -123,12 +115,6 @@ func can_play_more() -> bool:
 	if phase == "FINAL_DRAW":
 		return true
 	return played_this_draw < MAX_PLAYS_PER_DRAW
-
-
-func can_discard_more() -> bool:
-	if phase == "FINAL_DRAW":
-		return true
-	return discards_this_draw < MAX_DISCARDS_PER_DRAW
 
 
 func is_wildcard_configured(square: Dictionary) -> bool:
@@ -164,7 +150,7 @@ func play_square(square_id: int, row: int, col: int) -> Dictionary:
 	if not is_wildcard_configured(square):
 		return _fail("Choose a color/number for this wildcard before playing it.")
 	if not can_play_more():
-		return _fail("You've played the maximum of 7 squares this draw. Discard the rest.")
+		return _fail("You've played the maximum of 7 squares this draw. Press Next Draw to continue.")
 
 	var existing: Dictionary = grid[row][col]
 	var new_color: String = ColorRules.transform(existing["color"], square["color"])
@@ -179,31 +165,9 @@ func play_square(square_id: int, row: int, col: int) -> Dictionary:
 	else:
 		new_number = (existing["number"] + square["number"]) % 10
 
-	_push_undo()
 	grid[row][col] = {"color": new_color, "number": new_number}
 	hand.remove_at(idx)
 	played_this_draw += 1
-	_advance_if_hand_empty()
-	state_changed.emit()
-	return {"ok": true, "error": ""}
-
-
-func discard_square(square_id: int) -> Dictionary:
-	if phase == "GAME_OVER":
-		return _fail("The game is over.")
-	var idx: int = find_hand_index(square_id)
-	if idx == -1:
-		return _fail("That square is not in your hand.")
-	if not can_discard_more():
-		return _fail("You've already discarded the maximum of 5 squares this draw.")
-
-	_push_undo()
-	if square_id == pending_invert_id:
-		pending_invert_id = -1
-	hand.remove_at(idx)
-	if phase == "DRAWING":
-		discards_this_draw += 1
-	_advance_if_hand_empty()
 	state_changed.emit()
 	return {"ok": true, "error": ""}
 
@@ -222,7 +186,6 @@ func configure_wildcard(square_id: int, color: String, number: int) -> Dictionar
 		if number < 0 or number > 9:
 			return _fail("Choose a number from 0-9.")
 
-	_push_undo()
 	if square["wtype"] == "COLOR":
 		hand[idx]["color"] = color
 	elif square["wtype"] == "NUMBER":
@@ -267,14 +230,25 @@ func apply_invert_to(target_id: int) -> Dictionary:
 		pending_invert_id = -1
 		return _fail("The Invert Wildcard is no longer in your hand.")
 	if not can_play_more():
-		return _fail("You've played the maximum of 7 squares this draw. Discard the rest.")
+		return _fail("You've played the maximum of 7 squares this draw. Press Next Draw to continue.")
 
-	_push_undo()
 	hand[tidx]["inverted"] = true
 	hand.remove_at(iidx)
 	pending_invert_id = -1
 	played_this_draw += 1
-	_advance_if_hand_empty()
+	state_changed.emit()
+	return {"ok": true, "error": ""}
+
+
+## Clears whatever remains in hand and deals the next draw (or advances into
+## the final draw once draws 1-4 are done). Only valid during draws 1-4.
+func next_draw() -> Dictionary:
+	if phase != "DRAWING":
+		return _fail("Next Draw is only available during the first four draws.")
+	if draw_number < 4:
+		_deal_draw(draw_number + 1, "DRAWING")
+	else:
+		_deal_draw(5, "FINAL_DRAW")
 	state_changed.emit()
 	return {"ok": true, "error": ""}
 
@@ -282,33 +256,12 @@ func apply_invert_to(target_id: int) -> Dictionary:
 func end_game() -> Dictionary:
 	if phase != "FINAL_DRAW":
 		return _fail("You can only end the game after the final draw.")
-	_push_undo()
 	var result: Dictionary = PatternEngine.score_grid(grid)
 	last_result = result
 	phase = "GAME_OVER"
 	state_changed.emit()
 	game_over.emit(result)
 	return {"ok": true, "error": ""}
-
-
-func _advance_if_hand_empty() -> void:
-	if not hand.is_empty():
-		return
-	if phase != "DRAWING":
-		return
-	total_discards_first_four += discards_this_draw
-	if draw_number < 4:
-		draw_number += 1
-		played_this_draw = 0
-		discards_this_draw = 0
-		hand = Deck.draw_many(10)
-	else:
-		final_draw_size = (total_discards_first_four + 1) / 2
-		draw_number = 5
-		played_this_draw = 0
-		discards_this_draw = 0
-		phase = "FINAL_DRAW"
-		hand = Deck.draw_many(final_draw_size)
 
 
 func _fail(text: String) -> Dictionary:

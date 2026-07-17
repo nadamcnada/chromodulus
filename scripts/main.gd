@@ -71,7 +71,7 @@ func _build_sidebar() -> Control:
 	vbox.add_child(HSeparator.new())
 
 	vbox.add_child(_section_label("GAME VERSIONS"))
-	_nav_buttons["game"] = _add_nav_button(vbox, "Base (Solo Play)", func(): _show_view("game"))
+	_nav_buttons["game"] = _add_nav_button(vbox, "Classic (Solo Play)", func(): _show_view("game"))
 	for label in ["Duo Play (2-player)", "Club Play (4-player)", "Tournament Mode"]:
 		var btn := _add_nav_button(vbox, label, func(): pass)
 		btn.disabled = true

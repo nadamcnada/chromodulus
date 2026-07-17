@@ -13,34 +13,46 @@ func _ready() -> void:
 	add_theme_font_size_override("font_size", 18)
 
 
-func set_data(sq: Dictionary) -> void:
+## [param selected] outlines the square in orange when it's the currently
+## selected square in hand.
+func set_data(sq: Dictionary, selected: bool = false) -> void:
 	data = sq
 	square_id = sq["id"]
+	_apply_style(selected)
+	text = _label_for(sq)
+	tooltip_text = _tooltip_for(sq)
 
+
+func _apply_style(selected: bool) -> void:
 	var sb := StyleBoxFlat.new()
-	sb.border_color = Color.BLACK
-	sb.border_width_left = 2
-	sb.border_width_right = 2
-	sb.border_width_top = 2
-	sb.border_width_bottom = 2
 	sb.corner_radius_top_left = 4
 	sb.corner_radius_top_right = 4
 	sb.corner_radius_bottom_left = 4
 	sb.corner_radius_bottom_right = 4
-	if sq["color"] != "":
-		sb.bg_color = ColorRules.rgb(sq["color"])
+	if data.get("color", "") != "":
+		sb.bg_color = ColorRules.rgb(data["color"])
 	else:
 		sb.bg_color = Color(0.82, 0.82, 0.85)
+
+	if selected:
+		sb.border_width_left = 4
+		sb.border_width_right = 4
+		sb.border_width_top = 4
+		sb.border_width_bottom = 4
+		sb.border_color = ColorRules.HIGHLIGHT_ORANGE
+	else:
+		sb.border_width_left = 2
+		sb.border_width_right = 2
+		sb.border_width_top = 2
+		sb.border_width_bottom = 2
+		sb.border_color = Color.BLACK
 
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		add_theme_stylebox_override(state, sb)
 
-	var fc: Color = ColorRules.text_color(sq["color"]) if sq["color"] != "" else Color.BLACK
+	var fc: Color = ColorRules.text_color(data["color"]) if data.get("color", "") != "" else Color.BLACK
 	for cstate in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_disabled_color"]:
 		add_theme_color_override(cstate, fc)
-
-	text = _label_for(sq)
-	tooltip_text = _tooltip_for(sq)
 
 
 func _label_for(sq: Dictionary) -> String:
@@ -81,4 +93,4 @@ func _tooltip_for(sq: Dictionary) -> String:
 
 
 func set_selected(on: bool) -> void:
-	modulate = Color(1.0, 1.0, 0.55) if on else Color(1, 1, 1)
+	_apply_style(on)

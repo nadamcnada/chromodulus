@@ -17,7 +17,9 @@ func setup(r: int, c: int) -> void:
 	col = c
 
 
-func set_data(color: String, number: int, highlight: bool = false) -> void:
+## [param in_pattern] outlines the cell in orange when it's currently part of
+## a scored pattern on the grid.
+func set_data(color: String, number: int, in_pattern: bool = false) -> void:
 	text = str(number)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = ColorRules.rgb(color)
@@ -26,12 +28,12 @@ func set_data(color: String, number: int, highlight: bool = false) -> void:
 	sb.border_width_top = 1
 	sb.border_width_bottom = 1
 	sb.border_color = Color.BLACK
-	if highlight:
+	if in_pattern:
 		sb.border_width_left = 3
 		sb.border_width_right = 3
 		sb.border_width_top = 3
 		sb.border_width_bottom = 3
-		sb.border_color = Color(1.0, 0.85, 0.0)
+		sb.border_color = ColorRules.HIGHLIGHT_ORANGE
 
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		add_theme_stylebox_override(state, sb)

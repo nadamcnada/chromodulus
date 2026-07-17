@@ -14,7 +14,7 @@ var status_label: Label
 var hint_label: Label
 var hand_row: HBoxContainer
 var grid_container: GridContainer
-var discard_btn: Button
+var next_draw_btn: Button
 var undo_btn: Button
 var end_game_btn: Button
 var new_game_btn: Button
@@ -117,10 +117,10 @@ func _build_ui() -> void:
 	controls.add_theme_constant_override("separation", 10)
 	root.add_child(controls)
 
-	discard_btn = Button.new()
-	discard_btn.text = "Discard Selected"
-	discard_btn.pressed.connect(_on_discard_pressed)
-	controls.add_child(discard_btn)
+	next_draw_btn = Button.new()
+	next_draw_btn.text = "Next Draw"
+	next_draw_btn.pressed.connect(_on_next_draw_pressed)
+	controls.add_child(next_draw_btn)
 
 	invert_btn = Button.new()
 	invert_btn.text = "Cancel Invert"
@@ -221,12 +221,9 @@ func _on_cell_pressed(row: int, col: int) -> void:
 		selected_square_id = -1
 
 
-func _on_discard_pressed() -> void:
-	if selected_square_id == -1:
-		hint_label.text = "Select a square in your hand first."
-		return
-	GameState.discard_square(selected_square_id)
+func _on_next_draw_pressed() -> void:
 	selected_square_id = -1
+	GameState.next_draw()
 
 
 func _on_new_game_pressed() -> void:
@@ -276,22 +273,17 @@ func _ensure_wildcard_dialog() -> void:
 
 
 func _refresh_grid() -> void:
-	var selected_color: String = ""
-	if selected_square_id != -1:
-		var idx: int = GameState.find_hand_index(selected_square_id)
-		if idx != -1:
-			var sq: Dictionary = GameState.hand[idx]
-			if GameState.is_wildcard_configured(sq):
-				selected_color = sq["color"]
+	var live_result: Dictionary = PatternEngine.score_grid(GameState.grid)
+	var pattern_set: Dictionary = {}
+	for pc in live_result["pattern_cells"]:
+		pattern_set["%d,%d" % [pc["row"], pc["col"]]] = true
 
 	for r in range(GRID_SIZE):
 		for c in range(GRID_SIZE):
 			var cell: CellView = cells[r * GRID_SIZE + c]
 			var data: Dictionary = GameState.grid[r][c]
-			var highlight: bool = false
-			if selected_color != "":
-				highlight = ColorRules.is_allowed(data["color"], selected_color)
-			cell.set_data(data["color"], data["number"], highlight)
+			var in_pattern: bool = pattern_set.has("%d,%d" % [r, c])
+			cell.set_data(data["color"], data["number"], in_pattern)
 			cell.disabled = GameState.phase == "GAME_OVER"
 
 
@@ -301,9 +293,9 @@ func _refresh_hand() -> void:
 	square_views.clear()
 	for sq in GameState.hand:
 		var sv := SquareView.new()
-		sv.set_data(sq)
+		var is_selected: bool = sq["id"] == selected_square_id or sq["id"] == GameState.pending_invert_id
+		sv.set_data(sq, is_selected)
 		sv.pressed.connect(_on_square_pressed.bind(sq["id"]))
-		sv.set_selected(sq["id"] == selected_square_id or sq["id"] == GameState.pending_invert_id)
 		sv.disabled = GameState.phase == "GAME_OVER"
 		hand_row.add_child(sv)
 		square_views.append(sv)
@@ -312,13 +304,11 @@ func _refresh_hand() -> void:
 func _refresh_status() -> void:
 	match GameState.phase:
 		"DRAWING":
-			status_label.text = "Draw %d of 4 — Played %d/7, Discarded %d/5 (discard 3-5, play 5-7 per draw)" % [
-				GameState.draw_number, GameState.played_this_draw, GameState.discards_this_draw
+			status_label.text = "Draw %d of 4 — Played %d/7. Press Next Draw when you're ready to move on." % [
+				GameState.draw_number, GameState.played_this_draw
 			]
 		"FINAL_DRAW":
-			status_label.text = "Final Draw — %d squares dealt. Play as many or as few as you like, then press End Game." % [
-				GameState.hand.size() + GameState.played_this_draw + GameState.discards_this_draw
-			]
+			status_label.text = "Final Draw — %d squares left to play. Press End Game when you're finished." % GameState.hand.size()
 		"GAME_OVER":
 			status_label.text = "Game Over — Final Score: %d" % GameState.last_result.get("total", 0)
 
@@ -328,7 +318,7 @@ func _refresh_status() -> void:
 
 func _refresh_controls() -> void:
 	var game_over: bool = GameState.phase == "GAME_OVER"
-	discard_btn.disabled = game_over or not GameState.can_discard_more()
+	next_draw_btn.visible = GameState.phase == "DRAWING"
 	undo_btn.disabled = not GameState.can_undo()
 	end_game_btn.visible = GameState.phase == "FINAL_DRAW"
 	invert_btn.visible = GameState.pending_invert_id != -1
@@ -343,7 +333,7 @@ func _format_result(result: Dictionary) -> String:
 	else:
 		s += "[b]Patterns found:[/b]\n"
 		for p in patterns:
-			s += "• %s — %s\n" % [_describe_line(p), _describe_pattern(p)]
+			s += "• %s — %s (%d cells) = %d pts\n" % [_describe_line(p), _type_name(p["type"]), p["length"], p["score"]]
 	if result["nexus_total"] > 0:
 		s += "\n[b]Nexus bonuses:[/b] +%d\n" % result["nexus_total"]
 		for nc in result["nexus_cells"]:
@@ -365,40 +355,8 @@ func _describe_line(p: Dictionary) -> String:
 			return "Line"
 
 
-func _describe_pattern(p: Dictionary) -> String:
-	var parts: Array[String] = []
-	if not (p["numeric"] as Dictionary).is_empty():
-		parts.append("%s (%d)" % [_type_name(p["numeric"]["type"]), p["numeric"]["length"]])
-	if not (p["chromatic"] as Dictionary).is_empty():
-		parts.append("%s (%d)" % [_type_name(p["chromatic"]["type"]), p["chromatic"]["length"]])
-	var desc: String = "Pattern"
-	if parts.size() > 0:
-		desc = ""
-		for i in range(parts.size()):
-			if i > 0:
-				desc += ", "
-			desc += parts[i]
-	var extra: String = ""
-	if p["combo"] == "double":
-		extra = " [double combo]"
-	elif p["combo"] == "quadruple":
-		extra = " [quadruple combo]"
-	if p["numeric_block"] >= 2:
-		extra += " [2D x%d]" % p["numeric_block"]
-	if p["chromatic_block"] >= 2 and p["chromatic_block"] != p["numeric_block"]:
-		extra += " [2D x%d]" % p["chromatic_block"]
-	return "%s%s = %d pts" % [desc, extra, p["score"]]
-
-
 func _type_name(t: String) -> String:
 	match t:
-		"RUN": return "Run"
-		"CLUSTER": return "Cluster"
-		"ALT_RUN": return "Alternating Run"
-		"PYRAMID": return "Pyramid"
-		"MONOCHROME": return "Monochrome"
-		"ALT_COLOR": return "Alternating Colors"
-		"COLOR_PYRAMID": return "Color Pyramid"
-		"SPECTRUM": return "Spectrum"
-		"ONE_OF_EACH": return "One of Each Color"
+		"RUN": return "Run (same color)"
+		"CLUSTER": return "Cluster (same color)"
 		_: return t

@@ -5,10 +5,8 @@ extends Node
 ## Owns the 7x7 grid, the current hand, and the draw sequence: four 10-card
 ## draws (play up to 7, then advance with Next Draw) followed by a fifth and
 ## final 10-card draw (play any/all, then End Game). Undo steps back one
-## played square at a time, transparently crossing draw boundaries: undoing
-## the first move of a draw lands you back on the last move of the previous
-## draw, not on that draw's untouched freshly-dealt hand (there's nothing
-## useful to return to there - no move has happened yet).
+## played square at a time but never crosses into a previous draw - it can
+## only go as far back as the current draw's freshly dealt hand.
 
 signal state_changed
 signal message(text: String)
@@ -40,7 +38,6 @@ func new_game() -> void:
 		for c in range(GRID_SIZE):
 			row.append(_random_cell())
 		grid.append(row)
-	_history.clear()
 	pending_invert_id = -1
 	last_result = {}
 	_deal_draw(1, "DRAWING")
@@ -53,31 +50,27 @@ func _random_cell() -> Dictionary:
 	return {"color": color, "number": number}
 
 
-## Deals a fresh hand for the given draw number/phase and checkpoints the
-## resulting state so Undo can return here later.
+## Deals a fresh hand for the given draw number/phase. This is the floor
+## Undo cannot go past - starting a new draw always clears the undo history.
 func _deal_draw(new_draw_number: int, new_phase: String) -> void:
 	draw_number = new_draw_number
 	phase = new_phase
 	played_this_draw = 0
 	pending_invert_id = -1
 	hand = Deck.draw_many(DRAW_SIZE)
-	_push_transition()
+	_history.clear()
 
 
 # ---------------------------------------------------------------------------
 # Undo
 # ---------------------------------------------------------------------------
 #
-# Every checkpoint is tagged "transition" (dealt by new_game/next_draw/
-# end_game - nothing played yet) or "move" (a square was just played). A move
-# checkpoint REPLACES a preceding transition checkpoint instead of stacking
-# on top of it - a freshly dealt, untouched hand is never itself a place
-# Undo should land on. The one exception is the very start of the game: if
-# the transition checkpoint is the only entry in history, there's nothing
-# earlier to fall back to, so the first move of the game is appended
-# normally and stays undoable back to the initial deal.
+# Each play/invert-apply pushes the state as it was immediately before that
+# move. Undo pops the most recent one and restores it. The stack is cleared
+# whenever a new draw is dealt, so Undo can only step back through moves made
+# during the current draw - never into a previous draw.
 
-func _snapshot(is_transition: bool) -> Dictionary:
+func _snapshot() -> Dictionary:
 	return {
 		"grid": grid.duplicate(true),
 		"hand": hand.duplicate(true),
@@ -85,32 +78,22 @@ func _snapshot(is_transition: bool) -> Dictionary:
 		"played_this_draw": played_this_draw,
 		"phase": phase,
 		"pending_invert_id": pending_invert_id,
-		"is_transition": is_transition,
 	}
 
 
-func _push_transition() -> void:
-	_history.append(_snapshot(true))
-
-
-func _push_move() -> void:
-	var snap: Dictionary = _snapshot(false)
-	if _history.size() > 1 and _history[_history.size() - 1]["is_transition"]:
-		_history[_history.size() - 1] = snap
-	else:
-		_history.append(snap)
+func _push_undo() -> void:
+	_history.append(_snapshot())
 
 
 func can_undo() -> bool:
-	return _history.size() > 1
+	return not _history.is_empty()
 
 
 func undo() -> bool:
 	if not can_undo():
 		message.emit("Nothing to undo.")
 		return false
-	_history.pop_back()
-	var snap: Dictionary = _history[_history.size() - 1]
+	var snap: Dictionary = _history.pop_back()
 	grid = snap["grid"].duplicate(true)
 	hand = snap["hand"].duplicate(true)
 	draw_number = snap["draw_number"]
@@ -187,10 +170,10 @@ func play_square(square_id: int, row: int, col: int) -> Dictionary:
 	else:
 		new_number = (existing["number"] + square["number"]) % 10
 
+	_push_undo()
 	grid[row][col] = {"color": new_color, "number": new_number}
 	hand.remove_at(idx)
 	played_this_draw += 1
-	_push_move()
 	state_changed.emit()
 	return {"ok": true, "error": ""}
 
@@ -255,11 +238,11 @@ func apply_invert_to(target_id: int) -> Dictionary:
 	if not can_play_more():
 		return _fail("You've played the maximum of 7 squares this draw. Press Next Draw to continue.")
 
+	_push_undo()
 	hand[tidx]["inverted"] = true
 	hand.remove_at(iidx)
 	pending_invert_id = -1
 	played_this_draw += 1
-	_push_move()
 	state_changed.emit()
 	return {"ok": true, "error": ""}
 
@@ -283,7 +266,6 @@ func end_game() -> Dictionary:
 	var result: Dictionary = PatternEngine.score_grid(grid)
 	last_result = result
 	phase = "GAME_OVER"
-	_push_transition()
 	state_changed.emit()
 	game_over.emit(result)
 	return {"ok": true, "error": ""}

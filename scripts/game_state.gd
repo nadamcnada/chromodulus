@@ -4,9 +4,11 @@ extends Node
 ##
 ## Owns the 7x7 grid, the current hand, and the draw sequence: four 10-card
 ## draws (play up to 7, then advance with Next Draw) followed by a fifth and
-## final 10-card draw (play any/all, then End Game). Undo works per-draw: it
-## discards everything played since the previous draw began and returns you
-## to that draw's freshly dealt hand.
+## final 10-card draw (play any/all, then End Game). Undo steps back one
+## played square at a time, transparently crossing draw boundaries: undoing
+## the first move of a draw lands you back on the last move of the previous
+## draw, not on that draw's untouched freshly-dealt hand (there's nothing
+## useful to return to there - no move has happened yet).
 
 signal state_changed
 signal message(text: String)
@@ -59,14 +61,23 @@ func _deal_draw(new_draw_number: int, new_phase: String) -> void:
 	played_this_draw = 0
 	pending_invert_id = -1
 	hand = Deck.draw_many(DRAW_SIZE)
-	_history.append(_snapshot())
+	_push_transition()
 
 
 # ---------------------------------------------------------------------------
 # Undo
 # ---------------------------------------------------------------------------
+#
+# Every checkpoint is tagged "transition" (dealt by new_game/next_draw/
+# end_game - nothing played yet) or "move" (a square was just played). A move
+# checkpoint REPLACES a preceding transition checkpoint instead of stacking
+# on top of it - a freshly dealt, untouched hand is never itself a place
+# Undo should land on. The one exception is the very start of the game: if
+# the transition checkpoint is the only entry in history, there's nothing
+# earlier to fall back to, so the first move of the game is appended
+# normally and stays undoable back to the initial deal.
 
-func _snapshot() -> Dictionary:
+func _snapshot(is_transition: bool) -> Dictionary:
 	return {
 		"grid": grid.duplicate(true),
 		"hand": hand.duplicate(true),
@@ -74,15 +85,26 @@ func _snapshot() -> Dictionary:
 		"played_this_draw": played_this_draw,
 		"phase": phase,
 		"pending_invert_id": pending_invert_id,
+		"is_transition": is_transition,
 	}
+
+
+func _push_transition() -> void:
+	_history.append(_snapshot(true))
+
+
+func _push_move() -> void:
+	var snap: Dictionary = _snapshot(false)
+	if _history.size() > 1 and _history[_history.size() - 1]["is_transition"]:
+		_history[_history.size() - 1] = snap
+	else:
+		_history.append(snap)
 
 
 func can_undo() -> bool:
 	return _history.size() > 1
 
 
-## Discards everything played since the previous draw began and returns to
-## that draw's freshly dealt hand.
 func undo() -> bool:
 	if not can_undo():
 		message.emit("Nothing to undo.")
@@ -168,6 +190,7 @@ func play_square(square_id: int, row: int, col: int) -> Dictionary:
 	grid[row][col] = {"color": new_color, "number": new_number}
 	hand.remove_at(idx)
 	played_this_draw += 1
+	_push_move()
 	state_changed.emit()
 	return {"ok": true, "error": ""}
 
@@ -236,6 +259,7 @@ func apply_invert_to(target_id: int) -> Dictionary:
 	hand.remove_at(iidx)
 	pending_invert_id = -1
 	played_this_draw += 1
+	_push_move()
 	state_changed.emit()
 	return {"ok": true, "error": ""}
 
@@ -259,6 +283,7 @@ func end_game() -> Dictionary:
 	var result: Dictionary = PatternEngine.score_grid(grid)
 	last_result = result
 	phase = "GAME_OVER"
+	_push_transition()
 	state_changed.emit()
 	game_over.emit(result)
 	return {"ok": true, "error": ""}

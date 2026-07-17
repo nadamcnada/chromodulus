@@ -10,7 +10,6 @@ extends Node
 
 signal state_changed
 signal message(text: String)
-signal game_over(result: Dictionary)
 
 const GRID_SIZE := 7
 const MAX_PLAYS_PER_DRAW := 7
@@ -267,7 +266,6 @@ func end_game() -> Dictionary:
 	last_result = result
 	phase = "GAME_OVER"
 	state_changed.emit()
-	game_over.emit(result)
 	return {"ok": true, "error": ""}
 
 

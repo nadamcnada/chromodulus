@@ -19,8 +19,7 @@ var undo_btn: Button
 var end_game_btn: Button
 var new_game_btn: Button
 var invert_btn: Button
-var results_scroll: ScrollContainer
-var results_label: RichTextLabel
+var score_label: RichTextLabel
 var board_area: Control
 
 
@@ -29,7 +28,6 @@ func _ready() -> void:
 	_build_ui()
 	GameState.state_changed.connect(_on_state_changed)
 	GameState.message.connect(_on_message)
-	GameState.game_over.connect(_on_game_over)
 	_refresh()
 
 
@@ -94,6 +92,9 @@ func _build_ui() -> void:
 	var legend := _build_legend()
 	mid.add_child(legend)
 
+	var score_panel := _build_score_panel()
+	mid.add_child(score_panel)
+
 	var hand_panel := VBoxContainer.new()
 	hand_panel.add_theme_constant_override("separation", 8)
 	root.add_child(hand_panel)
@@ -143,16 +144,30 @@ func _build_ui() -> void:
 	new_game_btn.pressed.connect(_on_new_game_pressed)
 	controls.add_child(new_game_btn)
 
-	results_scroll = ScrollContainer.new()
-	results_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	results_scroll.visible = false
-	root.add_child(results_scroll)
 
-	results_label = RichTextLabel.new()
-	results_label.bbcode_enabled = true
-	results_label.fit_content = true
-	results_label.custom_minimum_size = Vector2(0, 200)
-	results_scroll.add_child(results_label)
+func _build_score_panel() -> Control:
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(320, 0)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 4)
+
+	var title := Label.new()
+	title.text = "Scoring Breakdown"
+	title.add_theme_font_size_override("font_size", 16)
+	box.add_child(title)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+
+	score_label = RichTextLabel.new()
+	score_label.bbcode_enabled = true
+	score_label.fit_content = true
+	score_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(score_label)
+
+	return box
 
 
 func _build_legend() -> Control:
@@ -244,21 +259,18 @@ func _on_state_changed() -> void:
 	_refresh()
 
 
-func _on_game_over(result: Dictionary) -> void:
-	results_scroll.visible = true
-	results_label.text = _format_result(result)
-
-
 # ---------------------------------------------------------------------------
 # Rendering
 # ---------------------------------------------------------------------------
 
 func _refresh() -> void:
 	_ensure_wildcard_dialog()
-	_refresh_grid()
+	var live_result: Dictionary = PatternEngine.score_grid(GameState.grid)
+	_refresh_grid(live_result)
 	_refresh_hand()
-	_refresh_status()
+	_refresh_status(live_result)
 	_refresh_controls()
+	_refresh_score_panel(live_result)
 
 
 func _ensure_wildcard_dialog() -> void:
@@ -272,8 +284,7 @@ func _ensure_wildcard_dialog() -> void:
 	wildcard_dialog.cancelled.connect(_on_wildcard_cancelled)
 
 
-func _refresh_grid() -> void:
-	var live_result: Dictionary = PatternEngine.score_grid(GameState.grid)
+func _refresh_grid(live_result: Dictionary) -> void:
 	var pattern_set: Dictionary = {}
 	for pc in live_result["pattern_cells"]:
 		pattern_set["%d,%d" % [pc["row"], pc["col"]]] = true
@@ -301,14 +312,16 @@ func _refresh_hand() -> void:
 		square_views.append(sv)
 
 
-func _refresh_status() -> void:
+func _refresh_status(live_result: Dictionary) -> void:
 	match GameState.phase:
 		"DRAWING":
-			status_label.text = "Draw %d of 4 — Played %d/7. Press Next Draw when you're ready to move on." % [
-				GameState.draw_number, GameState.played_this_draw
+			status_label.text = "Draw %d of 4 — Played %d/7 — Current Score: %d. Press Next Draw when you're ready to move on." % [
+				GameState.draw_number, GameState.played_this_draw, live_result["total"]
 			]
 		"FINAL_DRAW":
-			status_label.text = "Final Draw — %d squares left to play. Press End Game when you're finished." % GameState.hand.size()
+			status_label.text = "Final Draw — %d squares left to play — Current Score: %d. Press End Game when you're finished." % [
+				GameState.hand.size(), live_result["total"]
+			]
 		"GAME_OVER":
 			status_label.text = "Game Over — Final Score: %d" % GameState.last_result.get("total", 0)
 
@@ -317,21 +330,26 @@ func _refresh_status() -> void:
 
 
 func _refresh_controls() -> void:
-	var game_over: bool = GameState.phase == "GAME_OVER"
 	next_draw_btn.visible = GameState.phase == "DRAWING"
 	undo_btn.disabled = not GameState.can_undo()
 	end_game_btn.visible = GameState.phase == "FINAL_DRAW"
 	invert_btn.visible = GameState.pending_invert_id != -1
-	results_scroll.visible = game_over
 
 
-func _format_result(result: Dictionary) -> String:
-	var s := "[b][font_size=22]Final Score: %d[/font_size][/b]\n\n" % result["total"]
+func _refresh_score_panel(live_result: Dictionary) -> void:
+	var is_final: bool = GameState.phase == "GAME_OVER"
+	var result: Dictionary = GameState.last_result if is_final else live_result
+	score_label.text = _format_result(result, is_final)
+
+
+func _format_result(result: Dictionary, is_final: bool) -> String:
+	var heading: String = "FINAL SCORE" if is_final else "Current Score"
+	var s := "[b][font_size=22]%s: %d[/font_size][/b]\n\n" % [heading, result["total"]]
 	var patterns: Array = result["patterns"]
 	if patterns.is_empty():
-		s += "No scoring patterns were found on the grid.\n"
+		s += "No scoring patterns on the grid yet.\n"
 	else:
-		s += "[b]Patterns found:[/b]\n"
+		s += "[b]Patterns:[/b]\n"
 		for p in patterns:
 			s += "• %s — %s (%d cells) = %d pts\n" % [_describe_line(p), _type_name(p["type"]), p["length"], p["score"]]
 	if result["nexus_total"] > 0:

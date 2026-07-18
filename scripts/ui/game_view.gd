@@ -92,8 +92,8 @@ func _build_ui() -> void:
 	var legend := _build_legend()
 	mid.add_child(legend)
 
-	var score_panel := _build_score_panel()
-	mid.add_child(score_panel)
+	var reference_panel := _build_reference_panel()
+	mid.add_child(reference_panel)
 
 	var hand_panel := VBoxContainer.new()
 	hand_panel.add_theme_constant_override("separation", 8)
@@ -113,6 +113,9 @@ func _build_ui() -> void:
 	hand_row = HBoxContainer.new()
 	hand_row.add_theme_constant_override("separation", 8)
 	hand_scroll.add_child(hand_row)
+
+	var score_panel := _build_score_panel()
+	root.add_child(score_panel)
 
 	var controls := HBoxContainer.new()
 	controls.add_theme_constant_override("separation", 10)
@@ -147,8 +150,6 @@ func _build_ui() -> void:
 
 func _build_score_panel() -> Control:
 	var box := VBoxContainer.new()
-	box.custom_minimum_size = Vector2(320, 0)
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 4)
 
 	var title := Label.new()
@@ -157,7 +158,7 @@ func _build_score_panel() -> Control:
 	box.add_child(title)
 
 	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(0, 180)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(scroll)
 
@@ -168,6 +169,168 @@ func _build_score_panel() -> Control:
 	scroll.add_child(score_label)
 
 	return box
+
+
+# ---------------------------------------------------------------------------
+# Reference panel (color transformations + scoring pattern examples)
+# ---------------------------------------------------------------------------
+
+func _build_reference_panel() -> Control:
+	var outer := VBoxContainer.new()
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.custom_minimum_size = Vector2(380, 0)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 8)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(content)
+
+	content.add_child(_rich_title("Color Transformations"))
+	var transforms: Array = [
+		[["R"], ["G"], ["Y"]],
+		[["R"], ["B"], ["P"]],
+		[["G"], ["B"], ["A"]],
+		[["Y"], ["B"], ["W"]],
+		[["P"], ["G"], ["W"]],
+		[["A"], ["R"], ["W"]],
+		[["W"], ["R", "G", "B"], ["R", "G", "B"]],
+	]
+	for spec in transforms:
+		content.add_child(_transform_row(spec[0], spec[1], spec[2]))
+
+	content.add_child(HSeparator.new())
+	content.add_child(_rich_title("Scoring Patterns"))
+	content.add_child(_bullet("Row, Column or Diagonal"))
+	content.add_child(_bullet("4+ squares in length"))
+
+	content.add_child(_rich_subtitle("Run — Same Color"))
+	content.add_child(_example_row([
+		{"color": "R", "number": 1}, {"color": "R", "number": 2},
+		{"color": "R", "number": 3}, {"color": "R", "number": 4},
+	]))
+	content.add_child(_bullet("Numbers in sequential order"))
+	content.add_child(_bullet("Forward or backward (e.g. 4321)"))
+	content.add_child(_bullet("\"0\" can be high or low (e.g. 0123 or 7890)"))
+
+	content.add_child(_rich_subtitle("Cluster — Same Number and Color"))
+	content.add_child(_example_row([
+		{"color": "G", "number": 5}, {"color": "G", "number": 5},
+		{"color": "G", "number": 5}, {"color": "G", "number": 5},
+	]))
+
+	content.add_child(_rich_subtitle("Nexus Cells"))
+	content.add_child(_bullet("Added points for squares that are part of 2+ patterns"))
+	content.add_child(_build_nexus_example())
+
+	return outer
+
+
+func _rich_title(t: String) -> RichTextLabel:
+	var l := RichTextLabel.new()
+	l.bbcode_enabled = true
+	l.fit_content = true
+	l.text = "[font_size=17][b]%s[/b][/font_size]" % t
+	return l
+
+
+func _rich_subtitle(t: String) -> RichTextLabel:
+	var l := RichTextLabel.new()
+	l.bbcode_enabled = true
+	l.fit_content = true
+	l.text = "[font_size=14][b]%s[/b][/font_size]" % t
+	return l
+
+
+func _bullet(t: String) -> Label:
+	var l := Label.new()
+	l.text = "• %s" % t
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return l
+
+
+func _swatch(code: String) -> ColorRect:
+	var r := ColorRect.new()
+	r.custom_minimum_size = Vector2(18, 18)
+	r.color = ColorRules.rgb(code)
+	return r
+
+
+func _swatch_group(codes: Array) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+	for i in range(codes.size()):
+		if i > 0:
+			var slash := Label.new()
+			slash.text = "/"
+			row.add_child(slash)
+		row.add_child(_swatch(codes[i]))
+	return row
+
+
+func _transform_row(existing: Array, added: Array, result: Array) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.add_child(_swatch_group(existing))
+	row.add_child(_op_label("+"))
+	row.add_child(_swatch_group(added))
+	row.add_child(_op_label("="))
+	row.add_child(_swatch_group(result))
+	return row
+
+
+func _op_label(t: String) -> Label:
+	var l := Label.new()
+	l.text = t
+	return l
+
+
+## A row of small, non-interactive CellView tiles used to illustrate a pattern.
+func _example_row(entries: Array) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	for e in entries:
+		var cell := CellView.new()
+		row.add_child(cell)
+		cell.custom_minimum_size = Vector2(42, 42)
+		cell.set_data(e["color"], e["number"])
+		cell.disabled = true
+		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return row
+
+
+## A 4x4 mockup: a row and an intersecting column of Yellow 5/6/7/8, with the
+## shared cell (6) outlined in orange as the Nexus.
+func _build_nexus_example() -> Control:
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 2)
+	grid.add_theme_constant_override("v_separation", 2)
+
+	var sequence: Array = [5, 6, 7, 8]
+	for r in range(4):
+		for c in range(4):
+			var cell := CellView.new()
+			grid.add_child(cell)
+			cell.custom_minimum_size = Vector2(36, 36)
+			cell.disabled = true
+			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var in_row: bool = r == 1
+			var in_col: bool = c == 1
+			if in_row and in_col:
+				cell.set_data("Y", sequence[1], true)
+			elif in_row:
+				cell.set_data("Y", sequence[c])
+			elif in_col:
+				cell.set_data("Y", sequence[r])
+			else:
+				cell.set_data("W", 0)
+				cell.text = ""
+	return grid
 
 
 func _build_legend() -> Control:

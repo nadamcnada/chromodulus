@@ -9,6 +9,8 @@ var square_views: Array = []
 var selected_square_id: int = -1
 
 var wildcard_dialog: WildcardDialog
+var confirm_dialog: ConfirmationDialog
+var _confirm_action: Callable
 
 var status_label: Label
 var hint_label: Label
@@ -134,7 +136,7 @@ func _build_ui() -> void:
 
 	end_game_btn = Button.new()
 	end_game_btn.text = "End Game"
-	end_game_btn.pressed.connect(func(): GameState.end_game())
+	end_game_btn.pressed.connect(_on_end_game_pressed)
 	controls.add_child(end_game_btn)
 
 	new_game_btn = Button.new()
@@ -384,8 +386,16 @@ func _on_next_draw_pressed() -> void:
 
 
 func _on_new_game_pressed() -> void:
+	_open_confirm("Start a new game?", _confirm_new_game)
+
+
+func _confirm_new_game() -> void:
 	selected_square_id = -1
 	GameState.new_game()
+
+
+func _on_end_game_pressed() -> void:
+	_open_confirm("End the game?", GameState.end_game)
 
 
 func _on_wildcard_cancelled() -> void:
@@ -424,6 +434,33 @@ func _ensure_wildcard_dialog() -> void:
 	wildcard_dialog.number_chosen.connect(func(id, number): GameState.configure_wildcard(id, "", number))
 	wildcard_dialog.chromodulus_chosen.connect(func(id, color, number): GameState.configure_wildcard(id, color, number))
 	wildcard_dialog.cancelled.connect(_on_wildcard_cancelled)
+
+
+func _ensure_confirm_dialog() -> void:
+	if confirm_dialog != null:
+		return
+	confirm_dialog = ConfirmationDialog.new()
+	confirm_dialog.visible = false
+	confirm_dialog.exclusive = true
+	confirm_dialog.unresizable = true
+	confirm_dialog.ok_button_text = "OK"
+	add_child(confirm_dialog)
+	confirm_dialog.confirmed.connect(_on_confirm_dialog_confirmed)
+
+
+## Shows a Yes/No-style confirmation. [param action] is only invoked if the
+## player presses OK (or hits Enter, since OK holds focus by default).
+func _open_confirm(message: String, action: Callable) -> void:
+	_ensure_confirm_dialog()
+	confirm_dialog.dialog_text = message
+	_confirm_action = action
+	confirm_dialog.popup_centered()
+	confirm_dialog.get_ok_button().grab_focus()
+
+
+func _on_confirm_dialog_confirmed() -> void:
+	if _confirm_action.is_valid():
+		_confirm_action.call()
 
 
 func _refresh_grid(live_result: Dictionary) -> void:

@@ -40,26 +40,26 @@ func _build_ui() -> void:
 	margin.add_theme_constant_override("margin_bottom", 16)
 	add_child(margin)
 
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 12)
-	margin.add_child(root)
+	var root_hbox := HBoxContainer.new()
+	root_hbox.add_theme_constant_override("separation", 24)
+	margin.add_child(root_hbox)
+
+	var left_col := VBoxContainer.new()
+	left_col.add_theme_constant_override("separation", 12)
+	root_hbox.add_child(left_col)
 
 	status_label = Label.new()
 	status_label.add_theme_font_size_override("font_size", 18)
-	root.add_child(status_label)
+	left_col.add_child(status_label)
 
 	hint_label = Label.new()
 	hint_label.add_theme_color_override("font_color", Color(0.75, 0.2, 0.2))
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(hint_label)
-
-	var mid := HBoxContainer.new()
-	mid.add_theme_constant_override("separation", 24)
-	root.add_child(mid)
+	left_col.add_child(hint_label)
 
 	board_area = Control.new()
 	board_area.custom_minimum_size = Vector2(7 * 62 + 8, 7 * 62 + 8)
-	mid.add_child(board_area)
+	left_col.add_child(board_area)
 
 	var board_panel := PanelContainer.new()
 	var panel_sb := StyleBoxFlat.new()
@@ -88,16 +88,9 @@ func _build_ui() -> void:
 			grid_container.add_child(cell)
 			cells.append(cell)
 
-	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(200, 0)
-	mid.add_child(spacer)
-
-	var reference_panel := _build_reference_panel()
-	mid.add_child(reference_panel)
-
 	var hand_panel := VBoxContainer.new()
 	hand_panel.add_theme_constant_override("separation", 8)
-	root.add_child(hand_panel)
+	left_col.add_child(hand_panel)
 
 	var hand_title := Label.new()
 	hand_title.text = "Your Hand"
@@ -105,7 +98,9 @@ func _build_ui() -> void:
 	hand_panel.add_child(hand_title)
 
 	var hand_scroll := ScrollContainer.new()
-	hand_scroll.custom_minimum_size = Vector2(0, 100)
+	# Wide enough for a full 10-square hand, so the hand's own width (not
+	# just the board's) drives how far right the reference panel starts.
+	hand_scroll.custom_minimum_size = Vector2(740, 100)
 	hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	hand_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	hand_panel.add_child(hand_scroll)
@@ -115,11 +110,11 @@ func _build_ui() -> void:
 	hand_scroll.add_child(hand_row)
 
 	var score_panel := _build_score_panel()
-	root.add_child(score_panel)
+	left_col.add_child(score_panel)
 
 	var controls := HBoxContainer.new()
 	controls.add_theme_constant_override("separation", 10)
-	root.add_child(controls)
+	left_col.add_child(controls)
 
 	next_draw_btn = Button.new()
 	next_draw_btn.text = "Next Draw"
@@ -146,6 +141,9 @@ func _build_ui() -> void:
 	new_game_btn.text = "New Game"
 	new_game_btn.pressed.connect(_on_new_game_pressed)
 	controls.add_child(new_game_btn)
+
+	var reference_panel := _build_reference_panel()
+	root_hbox.add_child(reference_panel)
 
 
 func _build_score_panel() -> Control:
@@ -178,10 +176,11 @@ func _build_score_panel() -> Control:
 func _build_reference_panel() -> Control:
 	var outer := VBoxContainer.new()
 	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	outer.custom_minimum_size = Vector2(380, 0)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 7 * 62 + 8)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	outer.add_child(scroll)
 
@@ -202,6 +201,11 @@ func _build_reference_panel() -> Control:
 	]
 	for spec in transforms:
 		content.add_child(_transform_row(spec[0], spec[1], spec[2]))
+
+	content.add_child(HSeparator.new())
+	content.add_child(_rich_title("Number Transformations"))
+	content.add_child(_bullet("Numbers add together"))
+	content.add_child(_bullet("Modular Arithmetic keeps numbers single digit (e.g. 8 + 5 = 3)"))
 
 	content.add_child(HSeparator.new())
 	content.add_child(_rich_title("Scoring Patterns"))

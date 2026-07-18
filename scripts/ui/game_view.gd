@@ -55,7 +55,6 @@ func _build_ui() -> void:
 
 	var mid := HBoxContainer.new()
 	mid.add_theme_constant_override("separation", 24)
-	mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(mid)
 
 	board_area = Control.new()
@@ -89,8 +88,9 @@ func _build_ui() -> void:
 			grid_container.add_child(cell)
 			cells.append(cell)
 
-	var legend := _build_legend()
-	mid.add_child(legend)
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(200, 0)
+	mid.add_child(spacer)
 
 	var reference_panel := _build_reference_panel()
 	mid.add_child(reference_panel)
@@ -181,7 +181,7 @@ func _build_reference_panel() -> Control:
 	outer.custom_minimum_size = Vector2(380, 0)
 
 	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(0, 7 * 62 + 8)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	outer.add_child(scroll)
 
@@ -331,31 +331,6 @@ func _build_nexus_example() -> Control:
 				cell.set_data("W", 0)
 				cell.text = ""
 	return grid
-
-
-func _build_legend() -> Control:
-	var box := VBoxContainer.new()
-	box.custom_minimum_size = Vector2(190, 0)
-	box.add_theme_constant_override("separation", 4)
-
-	var title := Label.new()
-	title.text = "Color Key"
-	title.add_theme_font_size_override("font_size", 16)
-	box.add_child(title)
-
-	for code in ["R", "G", "B", "W", "Y", "P", "A"]:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		var swatch := ColorRect.new()
-		swatch.custom_minimum_size = Vector2(18, 18)
-		swatch.color = ColorRules.rgb(code)
-		row.add_child(swatch)
-		var lbl := Label.new()
-		lbl.text = ColorRules.color_name(code)
-		row.add_child(lbl)
-		box.add_child(row)
-
-	return box
 
 
 # ---------------------------------------------------------------------------

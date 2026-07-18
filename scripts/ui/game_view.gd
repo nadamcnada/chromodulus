@@ -14,6 +14,7 @@ var _confirm_action: Callable
 
 var status_label: Label
 var hint_label: Label
+var hand_title: Label
 var hand_row: HBoxContainer
 var grid_container: GridContainer
 var next_draw_btn: Button
@@ -94,8 +95,7 @@ func _build_ui() -> void:
 	hand_panel.add_theme_constant_override("separation", 8)
 	left_col.add_child(hand_panel)
 
-	var hand_title := Label.new()
-	hand_title.text = "Your Hand"
+	hand_title = Label.new()
 	hand_title.add_theme_font_size_override("font_size", 16)
 	hand_panel.add_child(hand_title)
 
@@ -455,6 +455,9 @@ func _open_confirm(message: String, action: Callable) -> void:
 	confirm_dialog.dialog_text = message
 	_confirm_action = action
 	confirm_dialog.popup_centered()
+	# popup_centered() auto-fits to content first; re-popup at double that
+	# size, still centered, per the requested "double size" popup.
+	confirm_dialog.popup_centered(confirm_dialog.size * 2)
 	confirm_dialog.get_ok_button().grab_focus()
 
 
@@ -478,6 +481,14 @@ func _refresh_grid(live_result: Dictionary) -> void:
 
 
 func _refresh_hand() -> void:
+	match GameState.phase:
+		"FINAL_DRAW":
+			hand_title.text = "Your Hand - Play up to 10 squares on the grid"
+		"GAME_OVER":
+			hand_title.text = "Your Hand"
+		_:
+			hand_title.text = "Your Hand - Play up to 7 squares on the grid"
+
 	for child in hand_row.get_children():
 		child.queue_free()
 	square_views.clear()

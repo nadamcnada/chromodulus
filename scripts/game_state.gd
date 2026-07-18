@@ -194,6 +194,7 @@ func configure_wildcard(square_id: int, color: String, number: int) -> Dictionar
 		if number < 0 or number > 9:
 			return _fail("Choose a number from 0-9.")
 
+	_push_undo()
 	if square["wtype"] == "COLOR":
 		hand[idx]["color"] = color
 	elif square["wtype"] == "NUMBER":

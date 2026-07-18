@@ -9,7 +9,7 @@ var square_views: Array = []
 var selected_square_id: int = -1
 
 var wildcard_dialog: WildcardDialog
-var confirm_dialog: ConfirmationDialog
+var confirm_dialog: ConfirmDialog
 var _confirm_action: Callable
 
 var status_label: Label
@@ -436,52 +436,20 @@ func _ensure_wildcard_dialog() -> void:
 	wildcard_dialog.cancelled.connect(_on_wildcard_cancelled)
 
 
-## Fixed so New Game and End Game always pop up identically sized, regardless
-## of message length or how many times a dialog has already been shown -
-## Window.size persists across popups, so deriving the size from the
-## dialog's own (previously-set) size would compound larger on every use.
-const CONFIRM_DIALOG_SIZE := Vector2i(560, 260)
-const CONFIRM_DIALOG_FONT_SIZE := 32
-
-
 func _ensure_confirm_dialog() -> void:
 	if confirm_dialog != null:
 		return
-	confirm_dialog = ConfirmationDialog.new()
-	confirm_dialog.visible = false
-	confirm_dialog.exclusive = true
-	confirm_dialog.unresizable = true
-	confirm_dialog.ok_button_text = "OK"
-	confirm_dialog.add_theme_font_size_override("font_size", CONFIRM_DIALOG_FONT_SIZE)
+	confirm_dialog = ConfirmDialog.new()
 	add_child(confirm_dialog)
 	confirm_dialog.confirmed.connect(_on_confirm_dialog_confirmed)
-	confirm_dialog.get_ok_button().add_theme_font_size_override("font_size", CONFIRM_DIALOG_FONT_SIZE)
-	confirm_dialog.get_cancel_button().add_theme_font_size_override("font_size", CONFIRM_DIALOG_FONT_SIZE)
-	# The theme override above may not reach AcceptDialog's internal message
-	# Label depending on how it looks up its font, so find and size it directly too.
-	var message_label: Label = _find_label(confirm_dialog)
-	if message_label != null:
-		message_label.add_theme_font_size_override("font_size", CONFIRM_DIALOG_FONT_SIZE)
-
-
-func _find_label(node: Node) -> Label:
-	for child in node.get_children():
-		if child is Label:
-			return child
-		var found: Label = _find_label(child)
-		if found != null:
-			return found
-	return null
 
 
 ## Shows a Yes/No-style confirmation. [param action] is only invoked if the
 ## player presses OK (or hits Enter, since OK holds focus by default).
 func _open_confirm(message: String, action: Callable) -> void:
 	_ensure_confirm_dialog()
-	confirm_dialog.dialog_text = message
 	_confirm_action = action
-	confirm_dialog.popup_centered(CONFIRM_DIALOG_SIZE)
-	confirm_dialog.get_ok_button().grab_focus()
+	confirm_dialog.open_with(message)
 
 
 func _on_confirm_dialog_confirmed() -> void:

@@ -165,7 +165,10 @@ func play_square(square_id: int, row: int, col: int) -> Dictionary:
 
 	var new_number: int
 	if square["inverted"]:
-		new_number = abs(existing["number"] - square["number"])
+		# Modular subtraction: wraps the same way addition does (e.g. 0 - 7
+		# becomes 3, as if borrowing a 10), rather than a plain absolute
+		# difference.
+		new_number = ((existing["number"] - square["number"]) % 10 + 10) % 10
 	else:
 		new_number = (existing["number"] + square["number"]) % 10
 

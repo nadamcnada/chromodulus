@@ -3,7 +3,8 @@ extends Control
 ## System and How to Play open as a modal popup confined to the content
 ## area (never covering the sidebar) rather than replacing the game view.
 
-var game_view: GameView
+var classic_view: GameView
+var plus_view: GameView
 var info_dialog: InfoDialog
 var content_area: Control
 var _nav_buttons: Dictionary = {}
@@ -11,7 +12,7 @@ var _nav_buttons: Dictionary = {}
 
 func _ready() -> void:
 	_build_ui()
-	_show_view("game")
+	_show_view("classic")
 
 
 func _build_ui() -> void:
@@ -27,9 +28,15 @@ func _build_ui() -> void:
 	content_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(content_area)
 
-	game_view = GameView.new()
-	game_view.set_anchors_preset(Control.PRESET_FULL_RECT)
-	content_area.add_child(game_view)
+	classic_view = GameView.new()
+	classic_view.ruleset = "CLASSIC"
+	classic_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_area.add_child(classic_view)
+
+	plus_view = GameView.new()
+	plus_view.ruleset = "PLUS"
+	plus_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_area.add_child(plus_view)
 
 	info_dialog = InfoDialog.new()
 	content_area.add_child(info_dialog)
@@ -64,7 +71,8 @@ func _build_sidebar() -> Control:
 	vbox.add_child(HSeparator.new())
 
 	vbox.add_child(_section_label("GAME VERSIONS"))
-	_nav_buttons["game"] = _add_nav_button(vbox, "Classic (Solo Play)", func(): _show_view("game"))
+	_nav_buttons["classic"] = _add_nav_button(vbox, "Classic (Solo Play)", func(): _show_view("classic"))
+	_nav_buttons["plus"] = _add_nav_button(vbox, "Plus (Solo Play)", func(): _show_view("plus"))
 	for label in ["Duo Play (2-player)", "Club Play (4-player)", "Tournament Mode"]:
 		var btn := _add_nav_button(vbox, label, func(): pass)
 		btn.disabled = true
@@ -109,7 +117,8 @@ func _add_nav_button(parent: Control, label: String, on_pressed: Callable, toggl
 
 
 func _show_view(which: String) -> void:
-	game_view.visible = which == "game"
+	classic_view.visible = which == "classic"
+	plus_view.visible = which == "plus"
 	for key in _nav_buttons.keys():
 		var btn: Button = _nav_buttons[key]
 		if not btn.disabled:

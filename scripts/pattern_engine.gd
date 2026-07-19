@@ -1,15 +1,25 @@
 class_name PatternEngine
 extends RefCounted
 ##
-## PatternEngine: pure, stateless scoring of a finished (or in-progress) grid,
-## implementing the Chromodulus Classic scoring system.
+## PatternEngine: pure, stateless scoring of a finished (or in-progress) grid.
+## Takes a [param ruleset] ("CLASSIC" or "PLUS") so the same engine can serve
+## every game version.
 ##
-## Every scoring pattern is chromo-numerical: a Run or a Cluster of the exact
-## same color. There are no separate numeric-only / chromatic-only patterns,
-## no combination bonuses, and no 2D pattern multipliers - Classic is
-## intentionally simpler than the original Base ruleset.
+## CLASSIC: every scoring pattern is chromo-numerical - a Run or a Cluster of
+## the exact same color. There are no separate numeric-only / chromatic-only
+## patterns, no combination bonuses, and no 2D pattern multipliers.
 ##
-## Design notes, consistent with the Base engine this replaced:
+## PLUS: everything Classic allows, plus Alternating Numbers and Alternating
+## Colors. Numeric shape (Run / Cluster / Alternating Numbers) and chromatic
+## shape (Monochrome / Alternating Colors) are now checked independently; a
+## window only scores if BOTH shapes qualify on the exact same cells. A
+## same-color Run or Cluster (Run/Cluster + Monochrome) scores exactly as it
+## does in Classic - unchanged, so Plus never scores an existing Classic
+## pattern differently. Every other qualifying pairing (Run/Cluster +
+## Alternating Colors, Alternating Numbers + Monochrome, Alternating Numbers +
+## Alternating Colors) is new in Plus and scores double.
+##
+## Design notes, consistent since the original Base engine:
 ## - Lines scanned: 7 rows, 7 columns, and all diagonals/anti-diagonals of
 ##   length >= 4 (off-center diagonals included), for 28 lines total.
 ## - Per line, only the single longest qualifying window is scored (shorter
@@ -26,7 +36,7 @@ const SCORE_TABLE: Dictionary = {4: 2, 5: 5, 6: 10, 7: 20}
 # Public entry point
 # ---------------------------------------------------------------------------
 
-static func score_grid(grid: Array) -> Dictionary:
+static func score_grid(grid: Array, ruleset: String = "CLASSIC") -> Dictionary:
 	var lines: Array = _generate_lines()
 	var line_data: Array = []
 
@@ -38,11 +48,15 @@ static func score_grid(grid: Array) -> Dictionary:
 			var cell: Dictionary = grid[p.x][p.y]
 			numbers.append(cell["number"])
 			colors.append(cell["color"])
+		var pattern: Dictionary = (
+			_find_best_pattern_plus(numbers, colors) if ruleset == "PLUS"
+			else _find_best_pattern(numbers, colors)
+		)
 		line_data.append({
 			"orientation": line["orientation"],
 			"index": line["index"],
 			"points": pts,
-			"pattern": _find_best_pattern(numbers, colors),
+			"pattern": pattern,
 		})
 
 	var total: int = 0
@@ -156,6 +170,52 @@ static func _find_best_pattern(numbers: Array, colors: Array) -> Dictionary:
 	return {}
 
 
+## Plus: numeric shape and chromatic shape are found independently; a window
+## only scores if both qualify on the same cells. Run/Cluster + Monochrome
+## reproduces Classic's score exactly (no multiplier); every other qualifying
+## pairing is new in Plus and scores double.
+static func _find_best_pattern_plus(numbers: Array, colors: Array) -> Dictionary:
+	var n: int = numbers.size()
+	for length in range(n, 3, -1):
+		for start in range(0, n - length + 1):
+			var num_window: Array = numbers.slice(start, start + length)
+			var col_window: Array = colors.slice(start, start + length)
+			var numeric_type: String = _numeric_shape(num_window)
+			var chromatic_type: String = _chromatic_shape(col_window)
+			if numeric_type == "" or chromatic_type == "":
+				continue
+			var is_legacy_combo: bool = (
+				(numeric_type == "RUN" or numeric_type == "CLUSTER")
+				and chromatic_type == "MONOCHROME"
+			)
+			var score: int = SCORE_TABLE[length] * (1 if is_legacy_combo else 2)
+			return {
+				"type": "%s_%s" % [numeric_type, chromatic_type],
+				"start": start,
+				"length": length,
+				"score": score,
+			}
+	return {}
+
+
+static func _numeric_shape(window: Array) -> String:
+	if _is_cluster(window):
+		return "CLUSTER"
+	if _is_run(window):
+		return "RUN"
+	if _is_alternating(window):
+		return "ALT_NUM"
+	return ""
+
+
+static func _chromatic_shape(window: Array) -> String:
+	if _is_same(window):
+		return "MONOCHROME"
+	if _is_alternating(window):
+		return "ALT_COLOR"
+	return ""
+
+
 # ---------------------------------------------------------------------------
 # Pattern predicates
 # ---------------------------------------------------------------------------
@@ -186,3 +246,28 @@ static func _is_same(window: Array) -> bool:
 
 static func _is_cluster(window: Array) -> bool:
 	return _is_same(window)
+
+
+## True if window is a repeating block of 2+ distinct values, repeated at
+## least twice (the block may trail off partway on its last repeat, e.g.
+## 12121 is period-2 repeated 2.5 times). Used for both Alternating Numbers
+## and Alternating Colors - generic over whatever element type is passed in.
+static func _is_alternating(window: Array) -> bool:
+	var n: int = window.size()
+	var distinct: Dictionary = {}
+	for v in window:
+		distinct[v] = true
+	if distinct.size() < 2:
+		return false
+	var max_p: int = n / 2
+	for p in range(2, max_p + 1):
+		if n < 2 * p:
+			continue
+		var ok: bool = true
+		for i in range(p, n):
+			if window[i] != window[i - p]:
+				ok = false
+				break
+		if ok:
+			return true
+	return false

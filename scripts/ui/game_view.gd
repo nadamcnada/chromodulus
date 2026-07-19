@@ -1,8 +1,14 @@
 class_name GameView
 extends Control
 ## The playable Chromodulus board: 7x7 grid, hand row, and turn controls.
+## Each GameView owns its own GameState instance - Classic and Plus (and any
+## future version) are separate, independent games, not shared sessions.
 
 const GRID_SIZE := 7
+
+## Set this before adding the view to the tree ("CLASSIC" or "PLUS").
+var ruleset: String = "CLASSIC"
+var game_state: GameState
 
 var cells: Array = []  # flat array of 49 CellView, row-major
 var square_views: Array = []
@@ -28,9 +34,10 @@ var board_area: Control
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	game_state = GameState.new(ruleset)
 	_build_ui()
-	GameState.state_changed.connect(_on_state_changed)
-	GameState.message.connect(_on_message)
+	game_state.state_changed.connect(_on_state_changed)
+	game_state.message.connect(_on_message)
 	_refresh()
 
 
@@ -126,12 +133,12 @@ func _build_ui() -> void:
 	invert_btn = Button.new()
 	invert_btn.text = "Cancel Invert"
 	invert_btn.visible = false
-	invert_btn.pressed.connect(func(): GameState.cancel_invert())
+	invert_btn.pressed.connect(func(): game_state.cancel_invert())
 	controls.add_child(invert_btn)
 
 	undo_btn = Button.new()
 	undo_btn.text = "Undo"
-	undo_btn.pressed.connect(func(): GameState.undo())
+	undo_btn.pressed.connect(func(): game_state.undo())
 	controls.add_child(undo_btn)
 
 	end_game_btn = Button.new()
@@ -344,23 +351,23 @@ func _build_nexus_example() -> Control:
 # ---------------------------------------------------------------------------
 
 func _on_square_pressed(square_id: int) -> void:
-	if GameState.pending_invert_id != -1:
-		if square_id == GameState.pending_invert_id:
-			GameState.cancel_invert()
+	if game_state.pending_invert_id != -1:
+		if square_id == game_state.pending_invert_id:
+			game_state.cancel_invert()
 		else:
-			GameState.apply_invert_to(square_id)
+			game_state.apply_invert_to(square_id)
 		return
 
-	var idx: int = GameState.find_hand_index(square_id)
+	var idx: int = game_state.find_hand_index(square_id)
 	if idx == -1:
 		return
-	var sq: Dictionary = GameState.hand[idx]
+	var sq: Dictionary = game_state.hand[idx]
 
 	if sq["wtype"] == "INVERT":
-		GameState.select_invert(square_id)
+		game_state.select_invert(square_id)
 		return
 
-	if not GameState.is_wildcard_configured(sq):
+	if not game_state.is_wildcard_configured(sq):
 		selected_square_id = square_id
 		wildcard_dialog.open_for(sq)
 		return
@@ -375,14 +382,14 @@ func _on_square_pressed(square_id: int) -> void:
 func _on_cell_pressed(row: int, col: int) -> void:
 	if selected_square_id == -1:
 		return
-	var result: Dictionary = GameState.play_square(selected_square_id, row, col)
+	var result: Dictionary = game_state.play_square(selected_square_id, row, col)
 	if result["ok"]:
 		selected_square_id = -1
 
 
 func _on_next_draw_pressed() -> void:
 	selected_square_id = -1
-	GameState.next_draw()
+	game_state.next_draw()
 
 
 func _on_new_game_pressed() -> void:
@@ -391,11 +398,11 @@ func _on_new_game_pressed() -> void:
 
 func _confirm_new_game() -> void:
 	selected_square_id = -1
-	GameState.new_game()
+	game_state.new_game()
 
 
 func _on_end_game_pressed() -> void:
-	_open_confirm("End the game?", GameState.end_game)
+	_open_confirm("End the game?", game_state.end_game)
 
 
 func _on_wildcard_cancelled() -> void:
@@ -417,7 +424,7 @@ func _on_state_changed() -> void:
 
 func _refresh() -> void:
 	_ensure_wildcard_dialog()
-	var live_result: Dictionary = PatternEngine.score_grid(GameState.grid)
+	var live_result: Dictionary = PatternEngine.score_grid(game_state.grid, ruleset)
 	_refresh_grid(live_result)
 	_refresh_hand()
 	_refresh_status(live_result)
@@ -430,9 +437,9 @@ func _ensure_wildcard_dialog() -> void:
 		return
 	wildcard_dialog = WildcardDialog.new()
 	add_child(wildcard_dialog)
-	wildcard_dialog.color_chosen.connect(func(id, color): GameState.configure_wildcard(id, color, 0))
-	wildcard_dialog.number_chosen.connect(func(id, number): GameState.configure_wildcard(id, "", number))
-	wildcard_dialog.chromodulus_chosen.connect(func(id, color, number): GameState.configure_wildcard(id, color, number))
+	wildcard_dialog.color_chosen.connect(func(id, color): game_state.configure_wildcard(id, color, 0))
+	wildcard_dialog.number_chosen.connect(func(id, number): game_state.configure_wildcard(id, "", number))
+	wildcard_dialog.chromodulus_chosen.connect(func(id, color, number): game_state.configure_wildcard(id, color, number))
 	wildcard_dialog.cancelled.connect(_on_wildcard_cancelled)
 
 
@@ -465,14 +472,14 @@ func _refresh_grid(live_result: Dictionary) -> void:
 	for r in range(GRID_SIZE):
 		for c in range(GRID_SIZE):
 			var cell: CellView = cells[r * GRID_SIZE + c]
-			var data: Dictionary = GameState.grid[r][c]
+			var data: Dictionary = game_state.grid[r][c]
 			var in_pattern: bool = pattern_set.has("%d,%d" % [r, c])
 			cell.set_data(data["color"], data["number"], in_pattern)
-			cell.disabled = GameState.phase == "GAME_OVER"
+			cell.disabled = game_state.phase == "GAME_OVER"
 
 
 func _refresh_hand() -> void:
-	match GameState.phase:
+	match game_state.phase:
 		"FINAL_DRAW":
 			hand_title.text = "Your Hand - Play up to 10 squares on the grid"
 		"GAME_OVER":
@@ -483,43 +490,43 @@ func _refresh_hand() -> void:
 	for child in hand_row.get_children():
 		child.queue_free()
 	square_views.clear()
-	for sq in GameState.hand:
+	for sq in game_state.hand:
 		var sv := SquareView.new()
-		var is_selected: bool = sq["id"] == selected_square_id or sq["id"] == GameState.pending_invert_id
+		var is_selected: bool = sq["id"] == selected_square_id or sq["id"] == game_state.pending_invert_id
 		sv.set_data(sq, is_selected)
 		sv.pressed.connect(_on_square_pressed.bind(sq["id"]))
-		sv.disabled = GameState.phase == "GAME_OVER"
+		sv.disabled = game_state.phase == "GAME_OVER"
 		hand_row.add_child(sv)
 		square_views.append(sv)
 
 
 func _refresh_status(live_result: Dictionary) -> void:
-	match GameState.phase:
+	match game_state.phase:
 		"DRAWING":
 			status_label.text = "Draw %d of 4 — Played %d/7 — Current Score: %d. Press Next Draw when you're ready to move on." % [
-				GameState.draw_number, GameState.played_this_draw, live_result["total"]
+				game_state.draw_number, game_state.played_this_draw, live_result["total"]
 			]
 		"FINAL_DRAW":
 			status_label.text = "Final Draw — %d squares left to play — Current Score: %d. Press End Game when you're finished." % [
-				GameState.hand.size(), live_result["total"]
+				game_state.hand.size(), live_result["total"]
 			]
 		"GAME_OVER":
-			status_label.text = "Game Over — Final Score: %d" % GameState.last_result.get("total", 0)
+			status_label.text = "Game Over — Final Score: %d" % game_state.last_result.get("total", 0)
 
-	if GameState.pending_invert_id != -1:
+	if game_state.pending_invert_id != -1:
 		hint_label.text = "Invert Wildcard selected — click another square in your hand to apply it (subtract instead of add)."
 
 
 func _refresh_controls() -> void:
-	next_draw_btn.visible = GameState.phase == "DRAWING"
-	undo_btn.disabled = not GameState.can_undo()
-	end_game_btn.visible = GameState.phase == "FINAL_DRAW"
-	invert_btn.visible = GameState.pending_invert_id != -1
+	next_draw_btn.visible = game_state.phase == "DRAWING"
+	undo_btn.disabled = not game_state.can_undo()
+	end_game_btn.visible = game_state.phase == "FINAL_DRAW"
+	invert_btn.visible = game_state.pending_invert_id != -1
 
 
 func _refresh_score_panel(live_result: Dictionary) -> void:
-	var is_final: bool = GameState.phase == "GAME_OVER"
-	var result: Dictionary = GameState.last_result if is_final else live_result
+	var is_final: bool = game_state.phase == "GAME_OVER"
+	var result: Dictionary = game_state.last_result if is_final else live_result
 	score_label.text = _format_result(result, is_final)
 
 
@@ -558,4 +565,10 @@ func _type_name(t: String) -> String:
 	match t:
 		"RUN": return "Run (same color)"
 		"CLUSTER": return "Cluster (same color)"
+		"RUN_MONOCHROME": return "Run (same color)"
+		"CLUSTER_MONOCHROME": return "Cluster (same color)"
+		"RUN_ALT_COLOR": return "Run + Alternating Colors"
+		"CLUSTER_ALT_COLOR": return "Cluster + Alternating Colors"
+		"ALT_NUM_MONOCHROME": return "Alternating Numbers (same color)"
+		"ALT_NUM_ALT_COLOR": return "Alternating Numbers + Alternating Colors"
 		_: return t

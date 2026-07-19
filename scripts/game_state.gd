@@ -1,6 +1,10 @@
-extends Node
+class_name GameState
+extends RefCounted
 ##
-## GameState: the authoritative Chromodulus Classic game engine.
+## GameState: the authoritative Chromodulus game engine, shared by every
+## game version (Classic, Plus, ...). Each GameView owns its own instance -
+## these are separate, independent games, not one shared session - and the
+## [member ruleset] tells PatternEngine which scoring rules to apply.
 ##
 ## Owns the 7x7 grid, the current hand, and the draw sequence: four 10-card
 ## draws (play up to 7, then advance with Next Draw) followed by a fifth and
@@ -15,6 +19,8 @@ const GRID_SIZE := 7
 const MAX_PLAYS_PER_DRAW := 7
 const DRAW_SIZE := 10
 
+var ruleset: String = "CLASSIC"  # "CLASSIC" | "PLUS"
+
 var grid: Array = []            # grid[row][col] = {"color":String,"number":int}
 var hand: Array[Dictionary] = []
 var draw_number: int = 1        # 1..5
@@ -26,7 +32,8 @@ var last_result: Dictionary = {}
 var _history: Array[Dictionary] = []
 
 
-func _ready() -> void:
+func _init(p_ruleset: String = "CLASSIC") -> void:
+	ruleset = p_ruleset
 	new_game()
 
 
@@ -266,7 +273,7 @@ func next_draw() -> Dictionary:
 func end_game() -> Dictionary:
 	if phase != "FINAL_DRAW":
 		return _fail("You can only end the game after the final draw.")
-	var result: Dictionary = PatternEngine.score_grid(grid)
+	var result: Dictionary = PatternEngine.score_grid(grid, ruleset)
 	last_result = result
 	phase = "GAME_OVER"
 	state_changed.emit()

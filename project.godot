@@ -19,7 +19,6 @@ run/main_scene="res://scenes/Main.tscn"
 
 ColorRules="*res://scripts/color_rules.gd"
 Deck="*res://scripts/deck.gd"
-GameState="*res://scripts/game_state.gd"
 
 [display]
 

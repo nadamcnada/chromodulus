@@ -216,7 +216,12 @@ static func _matches_extended(seq: Array) -> bool:
 	var e: Array = RUN_EXTENDED_SEQUENCE
 	var m: int = seq.size()
 	for i in range(0, e.size() - m + 1):
-		if e.slice(i, i + m) == seq:
+		var found: bool = true
+		for j in range(m):
+			if e[i + j] != seq[j]:
+				found = false
+				break
+		if found:
 			return true
 	return false
 

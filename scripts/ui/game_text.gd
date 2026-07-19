@@ -1,8 +1,9 @@
 class_name GameText
 extends RefCounted
-## Static player-facing text for the How to Play and Scoring System pages.
+## Static player-facing text for the How to Play and Scoring System popups.
+## Named per-version so each game version can supply its own content.
 
-const HOW_TO_PLAY_BBCODE := (
+const CLASSIC_HOW_TO_PLAY_BBCODE := (
 	"[font_size=28][b]How to Play — Chromodulus (Base)[/b][/font_size]\n\n" +
 	"[b]Objective[/b]\n" +
 	"Chromodulus is played on a 7x7 grid of chromo-numerical squares - each cell has a color (Red, Green, Blue, White, Yellow, Purple or Aqua) and a number (0-9). You add squares from your hand onto the grid to build chromatic and numerical patterns of 4 or more cells in a row, column, or diagonal - the more and longer the patterns, the higher your score.\n\n" +
@@ -36,35 +37,41 @@ const HOW_TO_PLAY_BBCODE := (
 	"Click a square, then click a grid cell to place it, or click Discard Selected to discard it instead."
 )
 
-const SCORING_SYSTEM_BBCODE := (
-	"[font_size=28][b]Scoring System[/b][/font_size]\n\n" +
-	"Patterns are scored along rows, columns and diagonals (including off-center diagonals), reading in either direction. A pattern needs 4 or more cells in sequence; only the single longest qualifying pattern in a line is scored - shorter sub-sequences within it are not scored again.\n\n" +
-	"[font_size=20][b]Numerical Patterns[/b][/font_size]\n" +
-	"[b]Run[/b] - consecutive numbers, e.g. 1234 or 7890 (0 may only sit before 1 or after 9 - no wraparound).\n" +
-	"[indent]4 cells = 5 pts, 5 = 10 pts, 6 = 20 pts, 7 = 40 pts[/indent]\n" +
-	"[b]Cluster[/b] - the same number repeated, e.g. 9999.\n" +
-	"[indent]4 cells = 5 pts, 5 = 10 pts, 6 = 20 pts, 7 = 40 pts[/indent]\n" +
-	"[b]Alternating Run[/b] - a repeating block of 2+ numbers, repeated at least twice, e.g. 121212 or 385385.\n" +
-	"[indent]4 cells = 2 pts, 5 = 5 pts, 6 = 10 pts, 7 = 20 pts[/indent]\n" +
-	"[b]Pyramid[/b] - a palindrome with no immediately repeated number, e.g. 12321 or 47074. Length must be exactly 5 or 7.\n" +
-	"[indent]5 cells = 5 pts, 7 cells = 20 pts[/indent]\n\n" +
-	"[font_size=20][b]Chromatic Patterns[/b][/font_size]\n" +
-	"[b]Monochrome[/b] - the same color repeated, e.g. RRRR.\n" +
-	"[indent]4 cells = 2 pts, 5 = 5 pts, 6 = 10 pts, 7 = 20 pts[/indent]\n" +
-	"[b]Alternating Colors[/b] - a repeating block of 2+ colors, repeated at least twice, e.g. RYRY.\n" +
-	"[indent]4 cells = 2 pts, 5 = 5 pts, 6 = 10 pts, 7 = 20 pts[/indent]\n" +
-	"[b]Color Pyramid[/b] - a color palindrome with no immediately repeated color. Length must be exactly 5 or 7.\n" +
-	"[indent]5 cells = 5 pts, 7 cells = 20 pts[/indent]\n" +
-	"[b]Spectrum[/b] - one of the six exact 7-color rainbow sequences (RYGABPR, RPBAGYR, GABPRYG, GYRPBAG, BPRYGAB, BAGYRPB).\n" +
-	"[indent]7 cells = 40 pts[/indent]\n" +
-	"[b]One of Each Color[/b] - all seven colors present, any order, across a full 7-cell line.\n" +
-	"[indent]7 cells = 40 pts[/indent]\n\n" +
-	"[font_size=20][b]Combining Numeric + Chromatic[/b][/font_size]\n" +
-	"When a numeric pattern and a chromatic pattern occupy the exact same cells, their combined points are [b]doubled[/b].\n" +
-	"Five special pairings score a [b]quadruple[/b] instead: Pyramid + Color Pyramid (matching structure), Alternating Run + Alternating Colors (matching structure), Run + One of Each Color (7 cells), Cluster + Monochrome (7 cells), and Run + Spectrum (7 cells).\n\n" +
-	"[font_size=20][b]Nexus[/b][/font_size]\n" +
-	"A Nexus cell belongs to two or more separately scored patterns (e.g. where a row pattern crosses a column pattern).\n" +
-	"[indent]2 patterns link = 20 pts, 3 link = 40 pts, 4+ link = 80 pts[/indent]\n\n" +
-	"[font_size=20][b]2D Patterns[/b][/font_size]\n" +
-	"If the exact same pattern repeats in adjacent parallel rows or columns (aligned cell-for-cell), every repeated line's score is multiplied: 2 lines = x4, 3 = x8, 4 = x16, 5 = x20, 6 = x24, 7 = x28. 2D bonuses apply to rows and columns only, never diagonals, and apply separately to the numeric and chromatic portions of a pattern."
+const CLASSIC_SCORING_SYSTEM_BBCODE := (
+	"[font_size=28][b]Chromodulus Classic Scoring System[/b][/font_size]\n\n" +
+	"• All patterns must be chromo-numerical (color + number pattern).\n" +
+	"• All patterns work the same in forward and reverse - e.g. 12345 = 54321\n" +
+	"• There must be 4+ to make a pattern, the longer the better (more points)\n" +
+	"• Some patterns require more than 4 cards minimum\n" +
+	"• Nexus cells: added points for cells that are part of more than one pattern, the lynchpin cell where two patterns intersect\n\n" +
+	"Note: White (W) is also eligible to be part of a pattern.\n\n" +
+	"[font_size=20][b]Chromo-Numerical Patterns[/b][/font_size]\n\n" +
+	"[b]Run — Same Color[/b] (e.g. Red-1, Red-2, Red-3, Red-4)\n" +
+	"[indent]Run (0-9)\n" +
+	"• A Run is defined as: for every adjacent pair, the difference is either +1 or -1 across the sequence\n" +
+	"• Wrapped runs are not allowed (e.g. 8901)\n" +
+	"• Minimum of 4 cells/squares (e.g. 1234 or 3456)\n" +
+	"• Up to 7 cells/squares long (e.g. 3456789)\n" +
+	"• 0 can be at the beginning before \"1\" or at the end after \"9\" (e.g. 0123 or 7890)[/indent]\n\n" +
+	"[b]Cluster — Same Color[/b] (e.g. Red-2, Red-2, Red-2, Red-2)\n" +
+	"[indent]Cluster (22222)\n" +
+	"• All same number\n" +
+	"• Minimum of 4 cells/squares (e.g. 9999)[/indent]\n\n" +
+	"[font_size=20][b]Scoring System[/b][/font_size]\n" +
+	"Note: If multiple pattern definitions match the same exact cells, only the highest scoring pattern is awarded.\n\n" +
+	"[b]Cluster — Same Color:[/b]\n" +
+	"[indent]4 cells in sequence = 2pts\n" +
+	"5 cells in sequence = 5pts\n" +
+	"6 cells in sequence = 10pts\n" +
+	"7 cells in sequence = 20pts[/indent]\n" +
+	"[b]Run — Same Color:[/b]\n" +
+	"[indent]4 cells in sequence = 2pts\n" +
+	"5 cells in sequence = 5pts\n" +
+	"6 cells in sequence = 10pts\n" +
+	"7 cells in sequence = 20pts[/indent]\n\n" +
+	"[b]Nexus:[/b]\n" +
+	"[indent]Links 2 numerical patterns = 20pts\n" +
+	"Links 3 numerical patterns = 40pts\n" +
+	"Links 4+ numerical patterns = 80pts each[/indent]\n\n" +
+	"Nexus Note: A Nexus is a cell that belongs to at least two independently scored patterns. Patterns sharing only endpoints still count. A pattern cannot intersect itself."
 )

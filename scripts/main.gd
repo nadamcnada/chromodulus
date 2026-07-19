@@ -1,10 +1,10 @@
 extends Control
-## App shell: left navigation sidebar + a swappable content area holding the
-## Game, Scoring System, and How to Play views.
+## App shell: left navigation sidebar + the game content area. Scoring
+## System and How to Play open as a modal popup confined to the content
+## area (never covering the sidebar) rather than replacing the game view.
 
 var game_view: GameView
-var scoring_view: InfoView
-var howto_view: InfoView
+var info_dialog: InfoDialog
 var content_area: Control
 var _nav_buttons: Dictionary = {}
 
@@ -31,15 +31,8 @@ func _build_ui() -> void:
 	game_view.set_anchors_preset(Control.PRESET_FULL_RECT)
 	content_area.add_child(game_view)
 
-	scoring_view = InfoView.new()
-	scoring_view.set_anchors_preset(Control.PRESET_FULL_RECT)
-	content_area.add_child(scoring_view)
-	scoring_view.set_content(GameText.SCORING_SYSTEM_BBCODE)
-
-	howto_view = InfoView.new()
-	howto_view.set_anchors_preset(Control.PRESET_FULL_RECT)
-	content_area.add_child(howto_view)
-	howto_view.set_content(GameText.HOW_TO_PLAY_BBCODE)
+	info_dialog = InfoDialog.new()
+	content_area.add_child(info_dialog)
 
 
 func _build_sidebar() -> Control:
@@ -80,10 +73,20 @@ func _build_sidebar() -> Control:
 	vbox.add_child(HSeparator.new())
 
 	vbox.add_child(_section_label("INFO"))
-	_nav_buttons["scoring"] = _add_nav_button(vbox, "Scoring System", func(): _show_view("scoring"))
-	_nav_buttons["howto"] = _add_nav_button(vbox, "How to Play", func(): _show_view("howto"))
+	# These open a popup over whatever's currently on screen rather than
+	# navigating to a new page, so they aren't part of the page-toggle group.
+	_add_nav_button(vbox, "Scoring System", _on_scoring_pressed, false)
+	_add_nav_button(vbox, "How to Play", _on_how_to_play_pressed, false)
 
 	return panel
+
+
+func _on_scoring_pressed() -> void:
+	info_dialog.open_with(GameText.CLASSIC_SCORING_SYSTEM_BBCODE)
+
+
+func _on_how_to_play_pressed() -> void:
+	info_dialog.open_with(GameText.CLASSIC_HOW_TO_PLAY_BBCODE)
 
 
 func _section_label(text: String) -> Label:
@@ -94,12 +97,12 @@ func _section_label(text: String) -> Label:
 	return lbl
 
 
-func _add_nav_button(parent: Control, label: String, on_pressed: Callable) -> Button:
+func _add_nav_button(parent: Control, label: String, on_pressed: Callable, toggles: bool = true) -> Button:
 	var b := Button.new()
 	b.text = label
 	b.custom_minimum_size = Vector2(0, 36)
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.toggle_mode = true
+	b.toggle_mode = toggles
 	b.pressed.connect(on_pressed)
 	parent.add_child(b)
 	return b
@@ -107,8 +110,6 @@ func _add_nav_button(parent: Control, label: String, on_pressed: Callable) -> Bu
 
 func _show_view(which: String) -> void:
 	game_view.visible = which == "game"
-	scoring_view.visible = which == "scoring"
-	howto_view.visible = which == "howto"
 	for key in _nav_buttons.keys():
 		var btn: Button = _nav_buttons[key]
 		if not btn.disabled:

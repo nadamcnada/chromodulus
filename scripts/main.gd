@@ -91,7 +91,10 @@ func _build_sidebar() -> Control:
 
 
 func _on_scoring_pressed() -> void:
-	info_dialog.open_with(GameText.CLASSIC_SCORING_SYSTEM_BBCODE)
+	if _current_view == "plus":
+		info_dialog.open_with(GameText.PLUS_SCORING_SYSTEM_BBCODE)
+	else:
+		info_dialog.open_with(GameText.CLASSIC_SCORING_SYSTEM_BBCODE)
 
 
 func _on_how_to_play_pressed() -> void:

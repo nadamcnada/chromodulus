@@ -213,6 +213,77 @@ const PLUS_HOW_TO_PLAY_BBCODE := (
 	"Nexus Note: A Nexus is a cell that belongs to at least two independently scored patterns. Patterns sharing only endpoints still count. A pattern cannot intersect itself."
 )
 
+const PLUS_SCORING_SYSTEM_BBCODE := (
+	"[font_size=28][b]Chromodulus Plus Scoring System[/b][/font_size]\n\n" +
+	"• All patterns must be chromo-numerical (color + number pattern).\n" +
+	"• All patterns work the same in forward and reverse - e.g. 12345 = 54321\n" +
+	"• There must be 4+ to make a pattern, the longer the better (more points)\n" +
+	"• Some patterns require more than 4 cards minimum\n" +
+	"• Nexus cells: added points for cells that are part of more than one pattern, the lynchpin cell where two patterns intersect\n\n" +
+	"Note: White (W) is also eligible to be part of a pattern.\n\n" +
+	"[font_size=20][b]Chromo-Numerical Patterns[/b][/font_size]\n\n" +
+	"[b]Run — Same Color[/b] (e.g. Red-1, Red-2, Red-3, Red-4)\n" +
+	"[indent]Run (0-9)\n" +
+	"• A Run is defined as: for every adjacent pair, the difference is either +1 or -1 across the sequence\n" +
+	"• Wrapped runs are not allowed (e.g. 8901)\n" +
+	"• Minimum of 4 cells/squares (e.g. 1234 or 3456)\n" +
+	"• Up to 7 cells/squares long (e.g. 3456789)\n" +
+	"• 0 can be at the beginning before \"1\" or at the end after \"9\" (e.g. 0123 or 7890)[/indent]\n\n" +
+	"[b]Cluster — Same Color[/b] (e.g. Red-2, Red-2, Red-2, Red-2)\n" +
+	"[indent]Cluster (22222)\n" +
+	"• All same number\n" +
+	"• Minimum of 4 cells/squares (e.g. 9999)[/indent]\n\n" +
+	"[b]Run — Alternating Color[/b] (e.g. Red-1, Yellow-2, Red-3, Yellow-4)\n" +
+	"[indent]e.g. Blue-5, Green-6, Blue-7, Green-8, Blue-9\n" +
+	"• Minimum of 4 cells/squares (e.g. BWBW)\n" +
+	"• Can be even in length (4/6) or odd in length (5/7, e.g. BWBWB or BWBWBWB)[/indent]\n\n" +
+	"[b]Cluster — Alternating Color[/b] (e.g. Red-3, Yellow-3, Red-3, Yellow-3)\n" +
+	"[indent]e.g. Blue-5, Green-5, Blue-5, Green-5, Blue-5\n" +
+	"• Minimum of 4 cells/squares (e.g. BWBW)\n" +
+	"• Can be even in length (4/6) or odd in length (5/7, e.g. BWBWB or BWBWBWB)[/indent]\n\n" +
+	"[b]Alternating Run & Color[/b] (e.g. Red-1, Yellow-2, Red-1, Yellow-2)\n" +
+	"[indent]e.g. Blue-9, White-7, Blue-9, White-7, Blue-9\n" +
+	"• Minimum of 4 cells/squares (e.g. BWBW)\n" +
+	"• Can be even in length (4/6) or odd in length (5/7, e.g. BWBWB or BWBWBWB)[/indent]\n\n" +
+	"[font_size=20][b]Scoring System[/b][/font_size]\n" +
+	"Note: If multiple pattern definitions match the same exact cells, only the highest scoring pattern is awarded.\n\n" +
+	"[b]Cluster — Same Color:[/b]\n" +
+	"[indent]4 cells in sequence = 2pts\n" +
+	"5 cells in sequence = 5pts\n" +
+	"6 cells in sequence = 10pts\n" +
+	"7 cells in sequence = 20pts[/indent]\n" +
+	"[b]Run — Same Color:[/b]\n" +
+	"[indent]4 cells in sequence = 2pts\n" +
+	"5 cells in sequence = 5pts\n" +
+	"6 cells in sequence = 10pts\n" +
+	"7 cells in sequence = 20pts[/indent]\n" +
+	"[b]Cluster — Alternating Color:[/b]\n" +
+	"[indent]4 cells in sequence = 2pts\n" +
+	"5 cells in sequence = 5pts\n" +
+	"6 cells in sequence = 10pts\n" +
+	"7 cells in sequence = 20pts[/indent]\n" +
+	"[b]Run — Alternating Color:[/b]\n" +
+	"[indent]4 cells in sequence = 2pts\n" +
+	"5 cells in sequence = 5pts\n" +
+	"6 cells in sequence = 10pts\n" +
+	"7 cells in sequence = 20pts[/indent]\n" +
+	"[b]Alternating Numbers — Same Color:[/b]\n" +
+	"[indent]4 cells in sequence = 2pts\n" +
+	"5 cells in sequence = 5pts\n" +
+	"6 cells in sequence = 10pts\n" +
+	"7 cells in sequence = 20pts[/indent]\n" +
+	"[b]Alternating Numbers — Alternating Color:[/b]\n" +
+	"[indent]4 cells in sequence = 2pts\n" +
+	"5 cells in sequence = 5pts\n" +
+	"6 cells in sequence = 10pts\n" +
+	"7 cells in sequence = 20pts[/indent]\n\n" +
+	"[b]Nexus:[/b]\n" +
+	"[indent]Links 2 numerical patterns = 20pts\n" +
+	"Links 3 numerical patterns = 40pts\n" +
+	"Links 4+ numerical patterns = 80pts each[/indent]\n\n" +
+	"Nexus Note: A Nexus is a cell that belongs to at least two independently scored patterns. Patterns sharing only endpoints still count. A pattern cannot intersect itself."
+)
+
 const CLASSIC_SCORING_SYSTEM_BBCODE := (
 	"[font_size=28][b]Chromodulus Classic Scoring System[/b][/font_size]\n\n" +
 	"• All patterns must be chromo-numerical (color + number pattern).\n" +

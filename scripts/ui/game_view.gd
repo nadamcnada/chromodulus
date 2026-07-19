@@ -67,6 +67,12 @@ func _build_ui() -> void:
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	left_col.add_child(hint_label)
 
+	if ruleset == "PLUS":
+		var plus_banner := Label.new()
+		plus_banner.text = "Plus Version: Alternating Number & Color Patterns allowed"
+		plus_banner.add_theme_font_size_override("font_size", 16)
+		left_col.add_child(plus_banner)
+
 	board_area = Control.new()
 	board_area.custom_minimum_size = Vector2(7 * 62 + 8, 7 * 62 + 8)
 	left_col.add_child(board_area)
@@ -235,6 +241,31 @@ func _build_reference_panel() -> Control:
 		{"color": "G", "number": 5}, {"color": "G", "number": 5},
 		{"color": "G", "number": 5}, {"color": "G", "number": 5},
 	]))
+
+	if ruleset == "PLUS":
+		content.add_child(_rich_subtitle("Run — Alternating Color"))
+		content.add_child(_example_row([
+			{"color": "B", "number": 1}, {"color": "W", "number": 2},
+			{"color": "B", "number": 3}, {"color": "W", "number": 4},
+		]))
+
+		content.add_child(_rich_subtitle("Cluster — Alternating Color"))
+		content.add_child(_example_row([
+			{"color": "P", "number": 6}, {"color": "A", "number": 6},
+			{"color": "P", "number": 6}, {"color": "A", "number": 6},
+		]))
+
+		content.add_child(_rich_subtitle("Alternating Run — Alternating Color"))
+		content.add_child(_example_row([
+			{"color": "G", "number": 1}, {"color": "Y", "number": 2},
+			{"color": "G", "number": 1}, {"color": "Y", "number": 2},
+		]))
+
+		content.add_child(_rich_subtitle("Alternating Run — Same Color"))
+		content.add_child(_example_row([
+			{"color": "R", "number": 1}, {"color": "R", "number": 2},
+			{"color": "R", "number": 1}, {"color": "R", "number": 2},
+		]))
 
 	content.add_child(_rich_subtitle("Nexus Cells"))
 	content.add_child(_bullet("Added points for squares that are part of 2+ patterns"))

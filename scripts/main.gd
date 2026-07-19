@@ -8,6 +8,7 @@ var plus_view: GameView
 var info_dialog: InfoDialog
 var content_area: Control
 var _nav_buttons: Dictionary = {}
+var _current_view: String = "classic"
 
 
 func _ready() -> void:
@@ -94,7 +95,10 @@ func _on_scoring_pressed() -> void:
 
 
 func _on_how_to_play_pressed() -> void:
-	info_dialog.open_with(GameText.CLASSIC_HOW_TO_PLAY_BBCODE)
+	if _current_view == "plus":
+		info_dialog.open_with(GameText.PLUS_HOW_TO_PLAY_BBCODE)
+	else:
+		info_dialog.open_with(GameText.CLASSIC_HOW_TO_PLAY_BBCODE)
 
 
 func _section_label(text: String) -> Label:
@@ -117,6 +121,7 @@ func _add_nav_button(parent: Control, label: String, on_pressed: Callable, toggl
 
 
 func _show_view(which: String) -> void:
+	_current_view = which
 	classic_view.visible = which == "classic"
 	plus_view.visible = which == "plus"
 	for key in _nav_buttons.keys():

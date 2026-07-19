@@ -563,12 +563,12 @@ func _describe_line(p: Dictionary) -> String:
 
 func _type_name(t: String) -> String:
 	match t:
-		"RUN": return "Run (same color)"
-		"CLUSTER": return "Cluster (same color)"
-		"RUN_MONOCHROME": return "Run (same color)"
-		"CLUSTER_MONOCHROME": return "Cluster (same color)"
-		"RUN_ALT_COLOR": return "Run + Alternating Colors"
-		"CLUSTER_ALT_COLOR": return "Cluster + Alternating Colors"
-		"ALT_NUM_MONOCHROME": return "Alternating Numbers (same color)"
-		"ALT_NUM_ALT_COLOR": return "Alternating Numbers + Alternating Colors"
+		"RUN": return "Run — Same Color"
+		"CLUSTER": return "Cluster — Same Color"
+		"RUN_MONOCHROME": return "Run — Same Color"
+		"CLUSTER_MONOCHROME": return "Cluster — Same Color"
+		"RUN_ALT_COLOR": return "Run — Alternating Color"
+		"CLUSTER_ALT_COLOR": return "Cluster — Alternating Color"
+		"ALT_NUM_MONOCHROME": return "Alternating Numbers — Same Color"
+		"ALT_NUM_ALT_COLOR": return "Alternating Numbers — Alternating Color"
 		_: return t

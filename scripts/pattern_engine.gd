@@ -12,12 +12,10 @@ extends RefCounted
 ## PLUS: everything Classic allows, plus Alternating Numbers and Alternating
 ## Colors. Numeric shape (Run / Cluster / Alternating Numbers) and chromatic
 ## shape (Monochrome / Alternating Colors) are now checked independently; a
-## window only scores if BOTH shapes qualify on the exact same cells. A
-## same-color Run or Cluster (Run/Cluster + Monochrome) scores exactly as it
-## does in Classic - unchanged, so Plus never scores an existing Classic
-## pattern differently. Every other qualifying pairing (Run/Cluster +
-## Alternating Colors, Alternating Numbers + Monochrome, Alternating Numbers +
-## Alternating Colors) is new in Plus and scores double.
+## window only scores if BOTH shapes qualify on the exact same cells. All six
+## pairings (Run/Cluster/Alternating Numbers x Monochrome/Alternating Colors)
+## share the exact same table below - Plus never scores an existing Classic
+## pattern (Run/Cluster + Monochrome) any differently than Classic does.
 ##
 ## Design notes, consistent since the original Base engine:
 ## - Lines scanned: 7 rows, 7 columns, and all diagonals/anti-diagonals of
@@ -171,9 +169,8 @@ static func _find_best_pattern(numbers: Array, colors: Array) -> Dictionary:
 
 
 ## Plus: numeric shape and chromatic shape are found independently; a window
-## only scores if both qualify on the same cells. Run/Cluster + Monochrome
-## reproduces Classic's score exactly (no multiplier); every other qualifying
-## pairing is new in Plus and scores double.
+## only scores if both qualify on the same cells. Every qualifying pairing
+## uses the same SCORE_TABLE - there's no combo multiplier.
 static func _find_best_pattern_plus(numbers: Array, colors: Array) -> Dictionary:
 	var n: int = numbers.size()
 	for length in range(n, 3, -1):
@@ -184,16 +181,11 @@ static func _find_best_pattern_plus(numbers: Array, colors: Array) -> Dictionary
 			var chromatic_type: String = _chromatic_shape(col_window)
 			if numeric_type == "" or chromatic_type == "":
 				continue
-			var is_legacy_combo: bool = (
-				(numeric_type == "RUN" or numeric_type == "CLUSTER")
-				and chromatic_type == "MONOCHROME"
-			)
-			var score: int = SCORE_TABLE[length] * (1 if is_legacy_combo else 2)
 			return {
 				"type": "%s_%s" % [numeric_type, chromatic_type],
 				"start": start,
 				"length": length,
-				"score": score,
+				"score": SCORE_TABLE[length],
 			}
 	return {}
 

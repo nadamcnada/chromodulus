@@ -2,28 +2,34 @@ class_name GameState
 extends RefCounted
 ##
 ## GameState: the authoritative Chromodulus game engine, shared by every
-## game version (Classic, Plus, ...). Each GameView owns its own instance -
-## these are separate, independent games, not one shared session - and the
-## [member ruleset] tells PatternEngine which scoring rules to apply.
+## game version (Classic, Plus, One-Liner, One-Liner Plus, ...). Each GameView
+## owns its own instance - these are separate, independent games, not one
+## shared session - and the [member ruleset] tells PatternEngine which
+## scoring rules to apply.
 ##
-## Owns the 7x7 grid, the current hand, and the draw sequence: four 10-card
-## draws (play up to 7, then advance with Next Draw) followed by a fifth and
-## final 10-card draw (play any/all, then End Game). Undo steps back one
-## played square at a time but never crosses into a previous draw - it can
-## only go as far back as the current draw's freshly dealt hand.
+## Classic/Plus own a 7x7 grid and a five-draw sequence: four 10-card draws
+## (play up to 7, then advance with Next Draw) followed by a fifth and final
+## 10-card draw (play any/all, then End Game). One-Liner/One-Liner Plus own a
+## single 1x10 row and a three-draw sequence instead (two 10-card draws,
+## play up to 7 each, then a third and final draw playing any/all). Undo
+## steps back one played square at a time but never crosses into a previous
+## draw - it can only go as far back as the current draw's freshly dealt hand.
 
 signal state_changed
 signal message(text: String)
 
-const GRID_SIZE := 7
 const MAX_PLAYS_PER_DRAW := 7
 const DRAW_SIZE := 10
 
-var ruleset: String = "CLASSIC"  # "CLASSIC" | "PLUS"
+var ruleset: String = "CLASSIC"  # "CLASSIC" | "PLUS" | "ONE_LINER" | "ONE_LINER_PLUS"
+
+var grid_rows: int = 7
+var grid_cols: int = 7
+var total_draws: int = 5        # the last draw_number is always FINAL_DRAW
 
 var grid: Array = []            # grid[row][col] = {"color":String,"number":int}
 var hand: Array[Dictionary] = []
-var draw_number: int = 1        # 1..5
+var draw_number: int = 1        # 1..total_draws
 var played_this_draw: int = 0
 var phase: String = "DRAWING"   # DRAWING | FINAL_DRAW | GAME_OVER
 var pending_invert_id: int = -1
@@ -34,14 +40,22 @@ var _history: Array[Dictionary] = []
 
 func _init(p_ruleset: String = "CLASSIC") -> void:
 	ruleset = p_ruleset
+	if ruleset in ["ONE_LINER", "ONE_LINER_PLUS"]:
+		grid_rows = 1
+		grid_cols = 10
+		total_draws = 3
+	else:
+		grid_rows = 7
+		grid_cols = 7
+		total_draws = 5
 	new_game()
 
 
 func new_game() -> void:
 	grid = []
-	for r in range(GRID_SIZE):
+	for r in range(grid_rows):
 		var row: Array = []
-		for c in range(GRID_SIZE):
+		for c in range(grid_cols):
 			row.append(_random_cell())
 		grid.append(row)
 	pending_invert_id = -1
@@ -150,7 +164,7 @@ func is_wildcard_configured(square: Dictionary) -> bool:
 func play_square(square_id: int, row: int, col: int) -> Dictionary:
 	if phase == "GAME_OVER":
 		return _fail("The game is over.")
-	if row < 0 or row >= GRID_SIZE or col < 0 or col >= GRID_SIZE:
+	if row < 0 or row >= grid_rows or col < 0 or col >= grid_cols:
 		return _fail("Invalid cell.")
 	var idx: int = find_hand_index(square_id)
 	if idx == -1:
@@ -258,14 +272,15 @@ func apply_invert_to(target_id: int) -> Dictionary:
 
 
 ## Clears whatever remains in hand and deals the next draw (or advances into
-## the final draw once draws 1-4 are done). Only valid during draws 1-4.
+## the final draw once all but the last draw are done). Only valid before
+## the final draw.
 func next_draw() -> Dictionary:
 	if phase != "DRAWING":
-		return _fail("Next Draw is only available during the first four draws.")
-	if draw_number < 4:
+		return _fail("Next Draw is only available before the final draw.")
+	if draw_number < total_draws - 1:
 		_deal_draw(draw_number + 1, "DRAWING")
 	else:
-		_deal_draw(5, "FINAL_DRAW")
+		_deal_draw(total_draws, "FINAL_DRAW")
 	state_changed.emit()
 	return {"ok": true, "error": ""}
 

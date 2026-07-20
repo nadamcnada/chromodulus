@@ -1,16 +1,21 @@
 class_name GameView
 extends Control
-## The playable Chromodulus board: 7x7 grid, hand row, and turn controls.
-## Each GameView owns its own GameState instance - Classic and Plus (and any
-## future version) are separate, independent games, not shared sessions.
+## The playable Chromodulus board (7x7 grid, or a single 10-cell row for the
+## One-Liner rulesets), hand row, and turn controls. Each GameView owns its
+## own GameState instance - Classic, Plus, One-Liner and One-Liner Plus are
+## separate, independent games, not shared sessions.
 
-const GRID_SIZE := 7
-
-## Set this before adding the view to the tree ("CLASSIC" or "PLUS").
+## Set this before adding the view to the tree
+## ("CLASSIC", "PLUS", "ONE_LINER" or "ONE_LINER_PLUS").
 var ruleset: String = "CLASSIC"
 var game_state: GameState
 
-var cells: Array = []  # flat array of 49 CellView, row-major
+## Board dimensions, derived from game_state (which derives them from
+## ruleset) once _ready() constructs it.
+var grid_rows: int = 7
+var grid_cols: int = 7
+
+var cells: Array = []  # flat array of grid_rows * grid_cols CellView, row-major
 var square_views: Array = []
 var selected_square_id: int = -1
 
@@ -35,6 +40,8 @@ var board_area: Control
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	game_state = GameState.new(ruleset)
+	grid_rows = game_state.grid_rows
+	grid_cols = game_state.grid_cols
 	_build_ui()
 	game_state.state_changed.connect(_on_state_changed)
 	game_state.message.connect(_on_message)
@@ -74,7 +81,7 @@ func _build_ui() -> void:
 		left_col.add_child(plus_banner)
 
 	board_area = Control.new()
-	board_area.custom_minimum_size = Vector2(7 * 62 + 8, 7 * 62 + 8)
+	board_area.custom_minimum_size = Vector2(grid_cols * 62 + 8, grid_rows * 62 + 8)
 	left_col.add_child(board_area)
 
 	var board_panel := PanelContainer.new()
@@ -90,14 +97,14 @@ func _build_ui() -> void:
 	board_area.add_child(board_panel)
 
 	grid_container = GridContainer.new()
-	grid_container.columns = GRID_SIZE
+	grid_container.columns = grid_cols
 	grid_container.add_theme_constant_override("h_separation", 0)
 	grid_container.add_theme_constant_override("v_separation", 0)
 	board_panel.add_child(grid_container)
 
 	cells.clear()
-	for r in range(GRID_SIZE):
-		for c in range(GRID_SIZE):
+	for r in range(grid_rows):
+		for c in range(grid_cols):
 			var cell := CellView.new()
 			cell.setup(r, c)
 			cell.pressed.connect(_on_cell_pressed.bind(r, c))
@@ -500,9 +507,9 @@ func _refresh_grid(live_result: Dictionary) -> void:
 	for pc in live_result["pattern_cells"]:
 		pattern_set["%d,%d" % [pc["row"], pc["col"]]] = true
 
-	for r in range(GRID_SIZE):
-		for c in range(GRID_SIZE):
-			var cell: CellView = cells[r * GRID_SIZE + c]
+	for r in range(grid_rows):
+		for c in range(grid_cols):
+			var cell: CellView = cells[r * grid_cols + c]
 			var data: Dictionary = game_state.grid[r][c]
 			var in_pattern: bool = pattern_set.has("%d,%d" % [r, c])
 			cell.set_data(data["color"], data["number"], in_pattern)
@@ -534,8 +541,9 @@ func _refresh_hand() -> void:
 func _refresh_status(live_result: Dictionary) -> void:
 	match game_state.phase:
 		"DRAWING":
-			status_label.text = "Draw %d of 4 — Played %d/7 — Current Score: %d. Press Next Draw when you're ready to move on." % [
-				game_state.draw_number, game_state.played_this_draw, live_result["total"]
+			status_label.text = "Draw %d of %d — Played %d/%d — Current Score: %d. Press Next Draw when you're ready to move on." % [
+				game_state.draw_number, game_state.total_draws - 1,
+				game_state.played_this_draw, GameState.MAX_PLAYS_PER_DRAW, live_result["total"]
 			]
 		"FINAL_DRAW":
 			status_label.text = "Final Draw — %d squares left to play — Current Score: %d. Press End Game when you're finished." % [

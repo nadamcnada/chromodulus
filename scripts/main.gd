@@ -5,6 +5,8 @@ extends Control
 
 var classic_view: GameView
 var plus_view: GameView
+var one_liner_view: GameView
+var one_liner_plus_view: GameView
 var info_dialog: InfoDialog
 var content_area: Control
 var _nav_buttons: Dictionary = {}
@@ -38,6 +40,16 @@ func _build_ui() -> void:
 	plus_view.ruleset = "PLUS"
 	plus_view.set_anchors_preset(Control.PRESET_FULL_RECT)
 	content_area.add_child(plus_view)
+
+	one_liner_view = GameView.new()
+	one_liner_view.ruleset = "ONE_LINER"
+	one_liner_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_area.add_child(one_liner_view)
+
+	one_liner_plus_view = GameView.new()
+	one_liner_plus_view.ruleset = "ONE_LINER_PLUS"
+	one_liner_plus_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_area.add_child(one_liner_plus_view)
 
 	info_dialog = InfoDialog.new()
 	content_area.add_child(info_dialog)
@@ -74,6 +86,8 @@ func _build_sidebar() -> Control:
 	vbox.add_child(_section_label("GAME VERSIONS"))
 	_nav_buttons["classic"] = _add_nav_button(vbox, "Classic (Solo Play)", func(): _show_view("classic"))
 	_nav_buttons["plus"] = _add_nav_button(vbox, "Plus (Solo Play)", func(): _show_view("plus"))
+	_nav_buttons["one_liner"] = _add_nav_button(vbox, "One-Liner (Solo Play)", func(): _show_view("one_liner"))
+	_nav_buttons["one_liner_plus"] = _add_nav_button(vbox, "One-Liner Plus (Solo Play)", func(): _show_view("one_liner_plus"))
 	for label in ["Duo Play (2-player)", "Club Play (4-player)", "Tournament Mode"]:
 		var btn := _add_nav_button(vbox, label, func(): pass)
 		btn.disabled = true
@@ -90,15 +104,18 @@ func _build_sidebar() -> Control:
 	return panel
 
 
+## One-Liner/One-Liner Plus don't have their own Scoring System/How to Play
+## copy yet, so they borrow Classic's/Plus's respectively (same pattern
+## rules) until version-specific text is provided.
 func _on_scoring_pressed() -> void:
-	if _current_view == "plus":
+	if _current_view in ["plus", "one_liner_plus"]:
 		info_dialog.open_with(GameText.PLUS_SCORING_SYSTEM_BBCODE)
 	else:
 		info_dialog.open_with(GameText.CLASSIC_SCORING_SYSTEM_BBCODE)
 
 
 func _on_how_to_play_pressed() -> void:
-	if _current_view == "plus":
+	if _current_view in ["plus", "one_liner_plus"]:
 		info_dialog.open_with(GameText.PLUS_HOW_TO_PLAY_BBCODE)
 	else:
 		info_dialog.open_with(GameText.CLASSIC_HOW_TO_PLAY_BBCODE)
@@ -127,6 +144,8 @@ func _show_view(which: String) -> void:
 	_current_view = which
 	classic_view.visible = which == "classic"
 	plus_view.visible = which == "plus"
+	one_liner_view.visible = which == "one_liner"
+	one_liner_plus_view.visible = which == "one_liner_plus"
 	for key in _nav_buttons.keys():
 		var btn: Button = _nav_buttons[key]
 		if not btn.disabled:

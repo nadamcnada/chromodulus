@@ -231,7 +231,8 @@ func _build_reference_panel() -> Control:
 
 	content.add_child(HSeparator.new())
 	content.add_child(_rich_title("Scoring Patterns"))
-	content.add_child(_bullet("Row, Column or Diagonal"))
+	if not ruleset in ["ONE_LINER", "ONE_LINER_PLUS"]:
+		content.add_child(_bullet("Row, Column or Diagonal"))
 	content.add_child(_bullet("4+ squares in length"))
 
 	content.add_child(_rich_subtitle("Run — Same Color"))
@@ -249,7 +250,7 @@ func _build_reference_panel() -> Control:
 		{"color": "G", "number": 5}, {"color": "G", "number": 5},
 	]))
 
-	if ruleset == "PLUS":
+	if ruleset in ["PLUS", "ONE_LINER_PLUS"]:
 		content.add_child(_rich_subtitle("Run — Alternating Color"))
 		content.add_child(_example_row([
 			{"color": "B", "number": 1}, {"color": "W", "number": 2},
@@ -276,7 +277,21 @@ func _build_reference_panel() -> Control:
 
 	content.add_child(_rich_subtitle("Nexus Cells"))
 	content.add_child(_bullet("Added points for squares that are part of 2+ patterns"))
-	content.add_child(_build_nexus_example())
+	match ruleset:
+		"ONE_LINER":
+			content.add_child(_build_one_row_nexus_example(
+				["Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y"],
+				[6, 6, 6, 6, 5, 4, 3, 2, 1, 0],
+				[3],
+			))
+		"ONE_LINER_PLUS":
+			content.add_child(_build_one_row_nexus_example(
+				["R", "Y", "R", "Y", "R", "Y", "R", "Y", "R", "Y"],
+				[1, 2, 1, 2, 3, 4, 3, 4, 5, 6],
+				[2, 3, 4, 5, 6, 7],
+			))
+		_:
+			content.add_child(_build_nexus_example())
 
 	return outer
 
@@ -382,6 +397,22 @@ func _build_nexus_example() -> Control:
 				cell.set_data("W", 0)
 				cell.text = ""
 	return grid
+
+
+## A single 10-cell row illustrating two overlapping One-Liner patterns;
+## cells at [param nexus_indices] are outlined orange as the shared Nexus
+## cell(s).
+func _build_one_row_nexus_example(colors: Array, numbers: Array, nexus_indices: Array) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+	for i in range(colors.size()):
+		var cell := CellView.new()
+		row.add_child(cell)
+		cell.custom_minimum_size = Vector2(34, 34)
+		cell.disabled = true
+		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.set_data(colors[i], numbers[i], nexus_indices.has(i))
+	return row
 
 
 # ---------------------------------------------------------------------------

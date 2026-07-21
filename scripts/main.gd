@@ -104,25 +104,26 @@ func _build_sidebar() -> Control:
 	return panel
 
 
-## One-Liner Plus doesn't have its own Scoring System/How to Play copy yet,
-## so it borrows Plus's (same pattern rules) until version-specific text is
-## provided.
 func _on_scoring_pressed() -> void:
 	match _current_view:
-		"plus", "one_liner_plus":
+		"plus":
 			info_dialog.open_with(GameText.PLUS_SCORING_SYSTEM_BBCODE)
 		"one_liner":
 			info_dialog.open_with(GameText.ONE_LINER_SCORING_SYSTEM_BBCODE)
+		"one_liner_plus":
+			info_dialog.open_with(GameText.ONE_LINER_PLUS_SCORING_SYSTEM_BBCODE)
 		_:
 			info_dialog.open_with(GameText.CLASSIC_SCORING_SYSTEM_BBCODE)
 
 
 func _on_how_to_play_pressed() -> void:
 	match _current_view:
-		"plus", "one_liner_plus":
+		"plus":
 			info_dialog.open_with(GameText.PLUS_HOW_TO_PLAY_BBCODE)
 		"one_liner":
 			info_dialog.open_with(GameText.ONE_LINER_HOW_TO_PLAY_BBCODE)
+		"one_liner_plus":
+			info_dialog.open_with(GameText.ONE_LINER_PLUS_HOW_TO_PLAY_BBCODE)
 		_:
 			info_dialog.open_with(GameText.CLASSIC_HOW_TO_PLAY_BBCODE)
 

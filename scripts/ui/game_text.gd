@@ -327,7 +327,7 @@ const ONE_LINER_HOW_TO_PLAY_BBCODE := (
 	"[font_size=28][b]Chromodulus One-Liner - How to Play[/b][/font_size]\n\n" +
 
 	"[font_size=20][b]Overview[/b][/font_size]\n" +
-	"Chromodulus Plus is a game that is played on a single 10-cell row. The cells of the row are pre-filled with \"chromo-numerical\" squares, which are Red, Green, Blue or White in color, and also feature a single-digit number (0-9). The player then adds squares that they draw from a stock deck of squares. The color of the square being played changes the color of the cell being played upon, and the number of the square being played combines with the number being played upon to change the number. The objective of the game is to create numerical and chromatic patterns to maximize the total score. The patterns must be 4 cells/squares or more in sequence (see patterns below). Bonus points are awarded for intersecting or overlapping patterns (a.k.a. Nexus Cells).\n\n" +
+	"Chromodulus One-Liner is a game that is played on a single 10-cell row. The cells of the row are pre-filled with \"chromo-numerical\" squares, which are Red, Green, Blue or White in color, and also feature a single-digit number (0-9). The player then adds squares that they draw from a stock deck of squares. The color of the square being played changes the color of the cell being played upon, and the number of the square being played combines with the number being played upon to change the number. The objective of the game is to create numerical and chromatic patterns to maximize the total score. The patterns must be 4 cells/squares or more in sequence (see patterns below). Bonus points are awarded for intersecting or overlapping patterns (a.k.a. Nexus Cells).\n\n" +
 
 	"[font_size=20][b]Game Mechanics[/b][/font_size]\n" +
 	"The game starts with a pre-filled row. There are two initial draws of 10 squares each to the player's hand. During each of these draws, the player can play up to 7 squares. When ready for the next draw, the player presses the \"Next Draw\" button. In the third and final draw, the player can play up to ten out of the ten squares drawn. When ready, the player presses the End Game button.\n\n" +
@@ -390,21 +390,6 @@ const ONE_LINER_HOW_TO_PLAY_BBCODE := (
 	"• All same number\n" +
 	"• Minimum of 4 cells/squares (e.g. 9999)[/indent]\n\n" +
 
-	"[b]Run — Alternating Color[/b] (e.g. Red-1, Yellow-2, Red-3, Yellow-4)\n" +
-	"[indent]e.g. Blue-5, Green-6, Blue-7, Green-8, Blue-9\n" +
-	"• Minimum of 4 cells/squares (e.g. BWBW)\n" +
-	"• Can be even in length (4/6) or odd in length (5/7, e.g. BWBWB or BWBWBWB)[/indent]\n\n" +
-
-	"[b]Cluster — Alternating Color[/b] (e.g. Red-3, Yellow-3, Red-3, Yellow-3)\n" +
-	"[indent]e.g. Blue-5, Green-5, Blue-5, Green-5, Blue-5\n" +
-	"• Minimum of 4 cells/squares (e.g. BWBW)\n" +
-	"• Can be even in length (4/6) or odd in length (5/7, e.g. BWBWB or BWBWBWB)[/indent]\n\n" +
-
-	"[b]Alternating Run & Color[/b] (e.g. Red-1, Yellow-2, Red-1, Yellow-2)\n" +
-	"[indent]e.g. Blue-9, White-7, Blue-9, White-7, Blue-9\n" +
-	"• Minimum of 4 cells/squares (e.g. BWBW)\n" +
-	"• Can be even in length (4/6) or odd in length (5/7, e.g. BWBWB or BWBWBWB)[/indent]\n\n" +
-
 	"[font_size=20][b]Scoring System[/b][/font_size]\n" +
 	"Note: If multiple pattern definitions match the same exact cells, only the highest scoring pattern is awarded.\n\n" +
 	"[b]Cluster — Same Color:[/b]\n" +
@@ -449,18 +434,6 @@ const ONE_LINER_SCORING_SYSTEM_BBCODE := (
 	"[indent]Cluster (22222)\n" +
 	"• All same number\n" +
 	"• Minimum of 4 cells/squares (e.g. 9999)[/indent]\n\n" +
-	"[b]Run — Alternating Color[/b] (e.g. Red-1, Yellow-2, Red-3, Yellow-4)\n" +
-	"[indent]e.g. Blue-5, Green-6, Blue-7, Green-8, Blue-9\n" +
-	"• Minimum of 4 cells/squares (e.g. BWBW)\n" +
-	"• Can be even in length (4/6) or odd in length (5/7, e.g. BWBWB or BWBWBWB)[/indent]\n\n" +
-	"[b]Cluster — Alternating Color[/b] (e.g. Red-3, Yellow-3, Red-3, Yellow-3)\n" +
-	"[indent]e.g. Blue-5, Green-5, Blue-5, Green-5, Blue-5\n" +
-	"• Minimum of 4 cells/squares (e.g. BWBW)\n" +
-	"• Can be even in length (4/6) or odd in length (5/7, e.g. BWBWB or BWBWBWB)[/indent]\n\n" +
-	"[b]Alternating Run & Color[/b] (e.g. Red-1, Yellow-2, Red-1, Yellow-2)\n" +
-	"[indent]e.g. Blue-9, White-7, Blue-9, White-7, Blue-9\n" +
-	"• Minimum of 4 cells/squares (e.g. BWBW)\n" +
-	"• Can be even in length (4/6) or odd in length (5/7, e.g. BWBWB or BWBWBWB)[/indent]\n\n" +
 	"[font_size=20][b]Scoring System[/b][/font_size]\n" +
 	"Note: If multiple pattern definitions match the same exact cells, only the highest scoring pattern is awarded.\n\n" +
 	"[b]Cluster — Same Color:[/b]\n" +

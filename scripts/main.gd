@@ -104,21 +104,27 @@ func _build_sidebar() -> Control:
 	return panel
 
 
-## One-Liner/One-Liner Plus don't have their own Scoring System/How to Play
-## copy yet, so they borrow Classic's/Plus's respectively (same pattern
-## rules) until version-specific text is provided.
+## One-Liner Plus doesn't have its own Scoring System/How to Play copy yet,
+## so it borrows Plus's (same pattern rules) until version-specific text is
+## provided.
 func _on_scoring_pressed() -> void:
-	if _current_view in ["plus", "one_liner_plus"]:
-		info_dialog.open_with(GameText.PLUS_SCORING_SYSTEM_BBCODE)
-	else:
-		info_dialog.open_with(GameText.CLASSIC_SCORING_SYSTEM_BBCODE)
+	match _current_view:
+		"plus", "one_liner_plus":
+			info_dialog.open_with(GameText.PLUS_SCORING_SYSTEM_BBCODE)
+		"one_liner":
+			info_dialog.open_with(GameText.ONE_LINER_SCORING_SYSTEM_BBCODE)
+		_:
+			info_dialog.open_with(GameText.CLASSIC_SCORING_SYSTEM_BBCODE)
 
 
 func _on_how_to_play_pressed() -> void:
-	if _current_view in ["plus", "one_liner_plus"]:
-		info_dialog.open_with(GameText.PLUS_HOW_TO_PLAY_BBCODE)
-	else:
-		info_dialog.open_with(GameText.CLASSIC_HOW_TO_PLAY_BBCODE)
+	match _current_view:
+		"plus", "one_liner_plus":
+			info_dialog.open_with(GameText.PLUS_HOW_TO_PLAY_BBCODE)
+		"one_liner":
+			info_dialog.open_with(GameText.ONE_LINER_HOW_TO_PLAY_BBCODE)
+		_:
+			info_dialog.open_with(GameText.CLASSIC_HOW_TO_PLAY_BBCODE)
 
 
 func _section_label(text: String) -> Label:

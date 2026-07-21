@@ -40,7 +40,7 @@ extends RefCounted
 const RUN_EXTENDED_SEQUENCE: Array[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 
 const SCORE_TABLE: Dictionary = {4: 2, 5: 5, 6: 10, 7: 20}
-const ONE_LINER_SCORE_TABLE: Dictionary = {4: 2, 5: 5, 6: 10, 7: 20, 8: 30, 9: 40, 10: 50}
+const ONE_LINER_SCORE_TABLE: Dictionary = {4: 2, 5: 5, 6: 10, 7: 20, 8: 40, 9: 70, 10: 100}
 
 const ONE_LINER_RULESETS: Array[String] = ["ONE_LINER", "ONE_LINER_PLUS"]
 

@@ -234,6 +234,8 @@ func _build_reference_panel() -> Control:
 	if not ruleset in ["ONE_LINER", "ONE_LINER_PLUS"]:
 		content.add_child(_bullet("Row, Column or Diagonal"))
 	content.add_child(_bullet("4+ squares in length"))
+	if ruleset in ["ONE_LINER", "ONE_LINER_PLUS"]:
+		content.add_child(_bullet("Overlapping patterns are allowed"))
 
 	content.add_child(_rich_subtitle("Run — Same Color"))
 	content.add_child(_example_row([

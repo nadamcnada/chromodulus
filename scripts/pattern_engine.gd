@@ -386,34 +386,48 @@ static func _is_alternating(window: Array) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Puzzle (3x3, win/lose)
+# Puzzle (NxN - 3x3, 4x4 or 5x5 - win/lose)
 # ---------------------------------------------------------------------------
 
-## A Puzzle grid is solved when BOTH hold:
-## 1. Every one of the 8 lines (3 rows, 3 columns, 2 diagonals) is, on its
-##    own, a numeric Cluster or Run (colors aren't considered per line here).
+## A Puzzle grid (any NxN size) is solved when BOTH hold:
+## 1. Every one of its 2N + 2 lines (N rows, N columns, 2 main diagonals) is,
+##    on its own, a numeric Cluster or Run (colors aren't considered per
+##    line here).
 ## 2. The grid's colors as a whole form one of two allowed arrangements: a
-##    2-color checkerboard, or 3 rows (or 3 columns) each solid a single
-##    color - the three rows/columns don't need distinct colors from each
-##    other (all one color, or two sharing a color with one different, both
+##    2-color checkerboard, or N rows (or N columns) each solid a single
+##    color - the rows/columns don't need distinct colors from each other
+##    (all one color, or some sharing a color with others different, both
 ##    count), they just each need to be internally uniform.
 static func check_puzzle_solved(grid: Array) -> bool:
 	return _puzzle_numeric_lines_ok(grid) and _puzzle_color_pattern_ok(grid)
 
 
-static func _puzzle_lines() -> Array:
+## Grid size is inferred from the grid itself (grid.size() rows), so this
+## works unchanged for any NxN Puzzle size.
+static func _puzzle_lines(n: int) -> Array:
 	var lines: Array = []
-	for r in range(3):
-		lines.append([Vector2i(r, 0), Vector2i(r, 1), Vector2i(r, 2)])
-	for c in range(3):
-		lines.append([Vector2i(0, c), Vector2i(1, c), Vector2i(2, c)])
-	lines.append([Vector2i(0, 0), Vector2i(1, 1), Vector2i(2, 2)])
-	lines.append([Vector2i(0, 2), Vector2i(1, 1), Vector2i(2, 0)])
+	for r in range(n):
+		var row_line: Array = []
+		for c in range(n):
+			row_line.append(Vector2i(r, c))
+		lines.append(row_line)
+	for c in range(n):
+		var col_line: Array = []
+		for r in range(n):
+			col_line.append(Vector2i(r, c))
+		lines.append(col_line)
+	var main_diag: Array = []
+	var anti_diag: Array = []
+	for i in range(n):
+		main_diag.append(Vector2i(i, i))
+		anti_diag.append(Vector2i(i, n - 1 - i))
+	lines.append(main_diag)
+	lines.append(anti_diag)
 	return lines
 
 
 static func _puzzle_numeric_lines_ok(grid: Array) -> bool:
-	for line in _puzzle_lines():
+	for line in _puzzle_lines(grid.size()):
 		var numbers: Array = []
 		for p in line:
 			numbers.append(grid[p.x][p.y]["number"])
@@ -423,50 +437,54 @@ static func _puzzle_numeric_lines_ok(grid: Array) -> bool:
 
 
 static func _puzzle_color_pattern_ok(grid: Array) -> bool:
+	var n: int = grid.size()
 	var colors: Array = []
-	for r in range(3):
+	for r in range(n):
 		var row: Array = []
-		for c in range(3):
+		for c in range(n):
 			row.append(grid[r][c]["color"])
 		colors.append(row)
 
 	return (
 		_puzzle_is_checkerboard(colors)
 		or _puzzle_is_solid_rows(colors)
-		or _puzzle_is_solid_rows(_transpose_3x3(colors))
+		or _puzzle_is_solid_rows(_transpose_square(colors))
 	)
 
 
-static func _transpose_3x3(colors: Array) -> Array:
+static func _transpose_square(colors: Array) -> Array:
+	var n: int = colors.size()
 	var t: Array = []
-	for c in range(3):
+	for c in range(n):
 		var row: Array = []
-		for r in range(3):
+		for r in range(n):
 			row.append(colors[r][c])
 		t.append(row)
 	return t
 
 
 static func _puzzle_is_checkerboard(colors: Array) -> bool:
+	var n: int = colors.size()
 	var color_a: String = colors[0][0]
 	var color_b: String = colors[0][1]
 	if color_a == color_b:
 		return false
-	for r in range(3):
-		for c in range(3):
+	for r in range(n):
+		for c in range(n):
 			var expected: String = color_a if (r + c) % 2 == 0 else color_b
 			if colors[r][c] != expected:
 				return false
 	return true
 
 
-## True if every row is solid one color - the three rows don't need
-## distinct colors from each other. Called a second time on the transposed
-## grid to also check solid columns.
+## True if every row is solid one color - the rows don't need distinct
+## colors from each other. Called a second time on the transposed grid to
+## also check solid columns.
 static func _puzzle_is_solid_rows(colors: Array) -> bool:
-	for r in range(3):
+	var n: int = colors.size()
+	for r in range(n):
 		var first: String = colors[r][0]
-		for c in range(3):
+		for c in range(n):
 			if colors[r][c] != first:
 				return false
 	return true

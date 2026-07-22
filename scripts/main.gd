@@ -7,7 +7,10 @@ var classic_view: GameView
 var plus_view: GameView
 var one_liner_view: GameView
 var one_liner_plus_view: GameView
-var puzzle_view: GameView
+var puzzle_selector: Control
+var puzzle_3_view: GameView
+var puzzle_4_view: GameView
+var puzzle_5_view: GameView
 var info_dialog: InfoDialog
 var content_area: Control
 var _nav_buttons: Dictionary = {}
@@ -52,13 +55,74 @@ func _build_ui() -> void:
 	one_liner_plus_view.set_anchors_preset(Control.PRESET_FULL_RECT)
 	content_area.add_child(one_liner_plus_view)
 
-	puzzle_view = GameView.new()
-	puzzle_view.ruleset = "PUZZLE"
-	puzzle_view.set_anchors_preset(Control.PRESET_FULL_RECT)
-	content_area.add_child(puzzle_view)
+	puzzle_selector = _build_puzzle_selector()
+	puzzle_selector.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_area.add_child(puzzle_selector)
+
+	puzzle_3_view = _build_puzzle_view(3)
+	content_area.add_child(puzzle_3_view)
+
+	puzzle_4_view = _build_puzzle_view(4)
+	content_area.add_child(puzzle_4_view)
+
+	puzzle_5_view = _build_puzzle_view(5)
+	content_area.add_child(puzzle_5_view)
 
 	info_dialog = InfoDialog.new()
 	content_area.add_child(info_dialog)
+
+
+func _build_puzzle_view(size: int) -> GameView:
+	var view := GameView.new()
+	view.ruleset = "PUZZLE"
+	view.puzzle_size = size
+	view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	return view
+
+
+## Shown when "Puzzle" is picked from the sidebar - one button per grid size,
+## each switching to that size's own GameView instance.
+func _build_puzzle_selector() -> Control:
+	var root := Control.new()
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_top", 16)
+	root.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 20)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Chromodulus Puzzle"
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "Choose a grid size to play."
+	subtitle.add_theme_font_size_override("font_size", 16)
+	vbox.add_child(subtitle)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	vbox.add_child(row)
+
+	row.add_child(_puzzle_size_button("3 x 3", func(): _show_view("puzzle_3")))
+	row.add_child(_puzzle_size_button("4 x 4", func(): _show_view("puzzle_4")))
+	row.add_child(_puzzle_size_button("5 x 5", func(): _show_view("puzzle_5")))
+
+	return root
+
+
+func _puzzle_size_button(label: String, on_pressed: Callable) -> Button:
+	var b := Button.new()
+	b.text = label
+	b.custom_minimum_size = Vector2(140, 70)
+	b.add_theme_font_size_override("font_size", 20)
+	b.pressed.connect(on_pressed)
+	return b
 
 
 func _build_sidebar() -> Control:
@@ -160,8 +224,13 @@ func _show_view(which: String) -> void:
 	plus_view.visible = which == "plus"
 	one_liner_view.visible = which == "one_liner"
 	one_liner_plus_view.visible = which == "one_liner_plus"
-	puzzle_view.visible = which == "puzzle"
+	puzzle_selector.visible = which == "puzzle"
+	puzzle_3_view.visible = which == "puzzle_3"
+	puzzle_4_view.visible = which == "puzzle_4"
+	puzzle_5_view.visible = which == "puzzle_5"
 	for key in _nav_buttons.keys():
 		var btn: Button = _nav_buttons[key]
 		if not btn.disabled:
-			btn.button_pressed = key == which
+			# The sidebar has a single "Puzzle" entry covering the size
+			# picker and all three sizes, so it highlights for any of them.
+			btn.button_pressed = which.begins_with("puzzle") if key == "puzzle" else key == which

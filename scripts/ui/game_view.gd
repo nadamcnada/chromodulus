@@ -1,13 +1,16 @@
 class_name GameView
 extends Control
-## The playable Chromodulus board (7x7 grid, or a single 10-cell row for the
-## One-Liner rulesets), hand row, and turn controls. Each GameView owns its
-## own GameState instance - Classic, Plus, One-Liner and One-Liner Plus are
-## separate, independent games, not shared sessions.
+## The playable Chromodulus board (7x7 grid, a single 10-cell row for the
+## One-Liner rulesets, or an NxN grid for Puzzle), hand row, and turn
+## controls. Each GameView owns its own GameState instance - every game
+## version is a separate, independent game, not a shared session.
 
 ## Set this before adding the view to the tree
-## ("CLASSIC", "PLUS", "ONE_LINER" or "ONE_LINER_PLUS").
+## ("CLASSIC", "PLUS", "ONE_LINER", "ONE_LINER_PLUS" or "PUZZLE").
 var ruleset: String = "CLASSIC"
+## Only meaningful when ruleset == "PUZZLE" - set this before adding the
+## view to the tree too (3, 4 or 5).
+var puzzle_size: int = 3
 var game_state: GameState
 
 ## Board dimensions, derived from game_state (which derives them from
@@ -39,7 +42,7 @@ var board_area: Control
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	game_state = GameState.new(ruleset)
+	game_state = GameState.new(ruleset, puzzle_size)
 	grid_rows = game_state.grid_rows
 	grid_cols = game_state.grid_cols
 	_build_ui()

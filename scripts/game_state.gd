@@ -10,11 +10,12 @@ extends RefCounted
 ## Classic/Plus own a 7x7 grid and a five-draw sequence: four 10-card draws
 ## (play up to 7, then advance with Next Draw) followed by a fifth and final
 ## 10-card draw (play any/all, then End Game). One-Liner/One-Liner Plus own a
-## single 1x10 row, and Puzzle a 3x3 grid, each with a three-draw sequence
-## instead (two 10-card draws, play up to 7 each, then a third and final
-## draw playing any/all). Undo steps back one played square at a time but
-## never crosses into a previous draw - it can only go as far back as the
-## current draw's freshly dealt hand.
+## single 1x10 row, and Puzzle an NxN grid (3x3, 4x4 or 5x5, per
+## [member puzzle_size]), each with a three-draw sequence instead (two
+## 10-card draws, play up to 7 each, then a third and final draw playing
+## any/all). Undo steps back one played square at a time but never crosses
+## into a previous draw - it can only go as far back as the current draw's
+## freshly dealt hand.
 ##
 ## Puzzle is win/lose rather than scored: end_game() checks
 ## PatternEngine.check_puzzle_solved() instead of score_grid(). It also ends
@@ -31,6 +32,7 @@ const MAX_PLAYS_PER_DRAW := 7
 const DRAW_SIZE := 10
 
 var ruleset: String = "CLASSIC"  # "CLASSIC" | "PLUS" | "ONE_LINER" | "ONE_LINER_PLUS" | "PUZZLE"
+var puzzle_size: int = 3        # 3, 4 or 5 - only meaningful when ruleset == "PUZZLE"
 
 var grid_rows: int = 7
 var grid_cols: int = 7
@@ -47,15 +49,16 @@ var last_result: Dictionary = {}
 var _history: Array[Dictionary] = []
 
 
-func _init(p_ruleset: String = "CLASSIC") -> void:
+func _init(p_ruleset: String = "CLASSIC", p_puzzle_size: int = 3) -> void:
 	ruleset = p_ruleset
+	puzzle_size = p_puzzle_size
 	if ruleset in ["ONE_LINER", "ONE_LINER_PLUS"]:
 		grid_rows = 1
 		grid_cols = 10
 		total_draws = 3
 	elif ruleset == "PUZZLE":
-		grid_rows = 3
-		grid_cols = 3
+		grid_rows = puzzle_size
+		grid_cols = puzzle_size
 		total_draws = 3
 	else:
 		grid_rows = 7

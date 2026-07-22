@@ -59,7 +59,9 @@ func _init(p_ruleset: String = "CLASSIC", p_puzzle_size: int = 3) -> void:
 	elif ruleset == "PUZZLE":
 		grid_rows = puzzle_size
 		grid_cols = puzzle_size
-		total_draws = 3
+		# 3x3 gets 2 regular draws + a final; 4x4/5x5 get one more regular
+		# draw (3) before the final, since there's more board to fill.
+		total_draws = 3 if puzzle_size == 3 else 4
 	else:
 		grid_rows = 7
 		grid_cols = 7

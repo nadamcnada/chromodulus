@@ -67,9 +67,12 @@ func _build_ui() -> void:
 
 ## Shows the dialog with the given message. OK grabs focus so it's
 ## highlighted and pressing Enter activates it (standard focused-button
-## behavior); Cancel (or closing the window) just hides it.
-func open_with(message: String) -> void:
+## behavior); Cancel (or closing the window) just hides it. Pass
+## [param ok_only] true for a plain announcement (e.g. Puzzle Solved!)
+## rather than a yes/no confirmation - this hides the Cancel button.
+func open_with(message: String, ok_only: bool = false) -> void:
 	message_label.text = message
+	cancel_btn.visible = not ok_only
 	popup_centered(SIZE)
 	ok_btn.grab_focus()
 

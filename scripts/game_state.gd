@@ -17,10 +17,15 @@ extends RefCounted
 ## current draw's freshly dealt hand.
 ##
 ## Puzzle is win/lose rather than scored: end_game() checks
-## PatternEngine.check_puzzle_solved() instead of score_grid().
+## PatternEngine.check_puzzle_solved() instead of score_grid(). It also ends
+## automatically - every play_square() checks the win condition, and the
+## moment it's met the game jumps straight to GAME_OVER and emits
+## [signal puzzle_solved], without waiting for the final draw or an explicit
+## End Game press.
 
 signal state_changed
 signal message(text: String)
+signal puzzle_solved
 
 const MAX_PLAYS_PER_DRAW := 7
 const DRAW_SIZE := 10
@@ -205,6 +210,12 @@ func play_square(square_id: int, row: int, col: int) -> Dictionary:
 	grid[row][col] = {"color": new_color, "number": new_number}
 	hand.remove_at(idx)
 	played_this_draw += 1
+
+	if ruleset == "PUZZLE" and PatternEngine.check_puzzle_solved(grid):
+		last_result = {"solved": true}
+		phase = "GAME_OVER"
+		puzzle_solved.emit()
+
 	state_changed.emit()
 	return {"ok": true, "error": ""}
 

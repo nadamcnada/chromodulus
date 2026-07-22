@@ -45,6 +45,8 @@ func _ready() -> void:
 	_build_ui()
 	game_state.state_changed.connect(_on_state_changed)
 	game_state.message.connect(_on_message)
+	if ruleset == "PUZZLE":
+		game_state.puzzle_solved.connect(_on_puzzle_solved)
 	_refresh()
 
 
@@ -537,6 +539,16 @@ func _open_confirm(message: String, action: Callable) -> void:
 func _on_confirm_dialog_confirmed() -> void:
 	if _confirm_action.is_valid():
 		_confirm_action.call()
+
+
+## Puzzle ends automatically the moment it's solved (see
+## GameState.play_square()); this just announces it. Clears
+## [member _confirm_action] first so pressing OK here can't accidentally
+## replay whatever New Game/End Game action was last armed.
+func _on_puzzle_solved() -> void:
+	_ensure_confirm_dialog()
+	_confirm_action = Callable()
+	confirm_dialog.open_with("Puzzle Solved!", true)
 
 
 func _refresh_grid(live_result: Dictionary) -> void:

@@ -7,6 +7,7 @@ var classic_view: GameView
 var plus_view: GameView
 var one_liner_view: GameView
 var one_liner_plus_view: GameView
+var puzzle_view: GameView
 var info_dialog: InfoDialog
 var content_area: Control
 var _nav_buttons: Dictionary = {}
@@ -51,6 +52,11 @@ func _build_ui() -> void:
 	one_liner_plus_view.set_anchors_preset(Control.PRESET_FULL_RECT)
 	content_area.add_child(one_liner_plus_view)
 
+	puzzle_view = GameView.new()
+	puzzle_view.ruleset = "PUZZLE"
+	puzzle_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_area.add_child(puzzle_view)
+
 	info_dialog = InfoDialog.new()
 	content_area.add_child(info_dialog)
 
@@ -88,6 +94,7 @@ func _build_sidebar() -> Control:
 	_nav_buttons["plus"] = _add_nav_button(vbox, "Plus (Solo Play)", func(): _show_view("plus"))
 	_nav_buttons["one_liner"] = _add_nav_button(vbox, "One-Liner (Solo Play)", func(): _show_view("one_liner"))
 	_nav_buttons["one_liner_plus"] = _add_nav_button(vbox, "One-Liner Plus (Solo Play)", func(): _show_view("one_liner_plus"))
+	_nav_buttons["puzzle"] = _add_nav_button(vbox, "Puzzle (Solo Play)", func(): _show_view("puzzle"))
 	for label in ["Duo Play (2-player)", "Club Play (4-player)", "Tournament Mode"]:
 		var btn := _add_nav_button(vbox, label, func(): pass)
 		btn.disabled = true
@@ -153,6 +160,7 @@ func _show_view(which: String) -> void:
 	plus_view.visible = which == "plus"
 	one_liner_view.visible = which == "one_liner"
 	one_liner_plus_view.visible = which == "one_liner_plus"
+	puzzle_view.visible = which == "puzzle"
 	for key in _nav_buttons.keys():
 		var btn: Button = _nav_buttons[key]
 		if not btn.disabled:

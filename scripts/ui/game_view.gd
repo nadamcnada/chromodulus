@@ -495,7 +495,11 @@ func _on_state_changed() -> void:
 
 func _refresh() -> void:
 	_ensure_wildcard_dialog()
-	var live_result: Dictionary = PatternEngine.score_grid(game_state.grid, ruleset)
+	# Puzzle is win/lose (checked in end_game()), not scored - score_grid()
+	# also isn't dimension-safe for a 3x3 grid, so it's never called here.
+	var live_result: Dictionary = (
+		{} if ruleset == "PUZZLE" else PatternEngine.score_grid(game_state.grid, ruleset)
+	)
 	_refresh_grid(live_result)
 	_refresh_hand()
 	_refresh_status(live_result)
@@ -537,7 +541,7 @@ func _on_confirm_dialog_confirmed() -> void:
 
 func _refresh_grid(live_result: Dictionary) -> void:
 	var pattern_set: Dictionary = {}
-	for pc in live_result["pattern_cells"]:
+	for pc in live_result.get("pattern_cells", []):
 		pattern_set["%d,%d" % [pc["row"], pc["col"]]] = true
 
 	for r in range(grid_rows):
@@ -572,18 +576,30 @@ func _refresh_hand() -> void:
 
 
 func _refresh_status(live_result: Dictionary) -> void:
-	match game_state.phase:
-		"DRAWING":
-			status_label.text = "Draw %d of %d — Played %d/%d — Current Score: %d. Press Next Draw when you're ready to move on." % [
-				game_state.draw_number, game_state.total_draws - 1,
-				game_state.played_this_draw, GameState.MAX_PLAYS_PER_DRAW, live_result["total"]
-			]
-		"FINAL_DRAW":
-			status_label.text = "Final Draw — %d squares left to play — Current Score: %d. Press End Game when you're finished." % [
-				game_state.hand.size(), live_result["total"]
-			]
-		"GAME_OVER":
-			status_label.text = "Game Over — Final Score: %d" % game_state.last_result.get("total", 0)
+	if ruleset == "PUZZLE":
+		match game_state.phase:
+			"DRAWING":
+				status_label.text = "Draw %d of %d — Played %d/%d. Arrange every row, column and diagonal into a pattern, then press End Game." % [
+					game_state.draw_number, game_state.total_draws - 1,
+					game_state.played_this_draw, GameState.MAX_PLAYS_PER_DRAW
+				]
+			"FINAL_DRAW":
+				status_label.text = "Final Draw — %d squares left to play. Press End Game when you're finished." % game_state.hand.size()
+			"GAME_OVER":
+				status_label.text = "Solved!" if game_state.last_result.get("solved", false) else "Not Solved"
+	else:
+		match game_state.phase:
+			"DRAWING":
+				status_label.text = "Draw %d of %d — Played %d/%d — Current Score: %d. Press Next Draw when you're ready to move on." % [
+					game_state.draw_number, game_state.total_draws - 1,
+					game_state.played_this_draw, GameState.MAX_PLAYS_PER_DRAW, live_result["total"]
+				]
+			"FINAL_DRAW":
+				status_label.text = "Final Draw — %d squares left to play — Current Score: %d. Press End Game when you're finished." % [
+					game_state.hand.size(), live_result["total"]
+				]
+			"GAME_OVER":
+				status_label.text = "Game Over — Final Score: %d" % game_state.last_result.get("total", 0)
 
 	if game_state.pending_invert_id != -1:
 		hint_label.text = "Invert Wildcard selected — click another square in your hand to apply it (subtract instead of add)."
@@ -598,8 +614,18 @@ func _refresh_controls() -> void:
 
 func _refresh_score_panel(live_result: Dictionary) -> void:
 	var is_final: bool = game_state.phase == "GAME_OVER"
+	if ruleset == "PUZZLE":
+		score_label.text = _format_puzzle_result(is_final)
+		return
 	var result: Dictionary = game_state.last_result if is_final else live_result
 	score_label.text = _format_result(result, is_final)
+
+
+func _format_puzzle_result(is_final: bool) -> String:
+	if not is_final:
+		return "[b][font_size=22]Chromodulus Puzzle[/font_size][/b]\n\nArrange every row, column and diagonal into a numeric Cluster or Run, with the colors forming one of the allowed patterns, then press End Game to check your solution."
+	var solved: bool = game_state.last_result.get("solved", false)
+	return "[b][font_size=22]%s[/font_size][/b]" % ("Solved!" if solved else "Not Solved")
 
 
 func _format_result(result: Dictionary, is_final: bool) -> String:

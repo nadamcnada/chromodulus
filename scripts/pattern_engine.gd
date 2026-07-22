@@ -28,6 +28,8 @@ extends RefCounted
 ## they would across two different lines elsewhere. Lengths 8-10 extend the
 ## score table (30/40/50pts).
 ##
+## PUZZLE: a 3x3 grid, win/lose rather than scored - see check_puzzle_solved().
+##
 ## Design notes, consistent since the original Base engine:
 ## - Classic/Plus: 7 rows, 7 columns, and all diagonals/anti-diagonals of
 ##   length >= 4 (off-center diagonals included), for 28 lines total. Per
@@ -381,3 +383,104 @@ static func _is_alternating(window: Array) -> bool:
 		if ok:
 			return true
 	return false
+
+
+# ---------------------------------------------------------------------------
+# Puzzle (3x3, win/lose)
+# ---------------------------------------------------------------------------
+
+## A Puzzle grid is solved when BOTH hold:
+## 1. Every one of the 8 lines (3 rows, 3 columns, 2 diagonals) is, on its
+##    own, a numeric Cluster or Run (colors aren't considered per line here).
+## 2. The grid's colors as a whole form one of three allowed arrangements:
+##    all one color, a 2-color checkerboard, or 3 rows (or 3 columns) each
+##    solid a single color, with all three colors distinct.
+static func check_puzzle_solved(grid: Array) -> bool:
+	return _puzzle_numeric_lines_ok(grid) and _puzzle_color_pattern_ok(grid)
+
+
+static func _puzzle_lines() -> Array:
+	var lines: Array = []
+	for r in range(3):
+		lines.append([Vector2i(r, 0), Vector2i(r, 1), Vector2i(r, 2)])
+	for c in range(3):
+		lines.append([Vector2i(0, c), Vector2i(1, c), Vector2i(2, c)])
+	lines.append([Vector2i(0, 0), Vector2i(1, 1), Vector2i(2, 2)])
+	lines.append([Vector2i(0, 2), Vector2i(1, 1), Vector2i(2, 0)])
+	return lines
+
+
+static func _puzzle_numeric_lines_ok(grid: Array) -> bool:
+	for line in _puzzle_lines():
+		var numbers: Array = []
+		for p in line:
+			numbers.append(grid[p.x][p.y]["number"])
+		if not (_is_cluster(numbers) or _is_run(numbers)):
+			return false
+	return true
+
+
+static func _puzzle_color_pattern_ok(grid: Array) -> bool:
+	var colors: Array = []
+	for r in range(3):
+		var row: Array = []
+		for c in range(3):
+			row.append(grid[r][c]["color"])
+		colors.append(row)
+
+	return (
+		_puzzle_is_monochrome(colors)
+		or _puzzle_is_checkerboard(colors)
+		or _puzzle_is_solid_distinct_rows(colors)
+		or _puzzle_is_solid_distinct_rows(_transpose_3x3(colors))
+	)
+
+
+static func _transpose_3x3(colors: Array) -> Array:
+	var t: Array = []
+	for c in range(3):
+		var row: Array = []
+		for r in range(3):
+			row.append(colors[r][c])
+		t.append(row)
+	return t
+
+
+static func _puzzle_is_monochrome(colors: Array) -> bool:
+	var first: String = colors[0][0]
+	for r in range(3):
+		for c in range(3):
+			if colors[r][c] != first:
+				return false
+	return true
+
+
+static func _puzzle_is_checkerboard(colors: Array) -> bool:
+	var color_a: String = colors[0][0]
+	var color_b: String = colors[0][1]
+	if color_a == color_b:
+		return false
+	for r in range(3):
+		for c in range(3):
+			var expected: String = color_a if (r + c) % 2 == 0 else color_b
+			if colors[r][c] != expected:
+				return false
+	return true
+
+
+## True if every row is solid one color and the three rows' colors are all
+## distinct. Called a second time on the transposed grid to also check
+## solid-distinct columns.
+static func _puzzle_is_solid_distinct_rows(colors: Array) -> bool:
+	var row_colors: Array = []
+	for r in range(3):
+		var first: String = colors[r][0]
+		for c in range(3):
+			if colors[r][c] != first:
+				return false
+		row_colors.append(first)
+	return (
+		row_colors[0] != row_colors[1]
+		and row_colors[1] != row_colors[2]
+		and row_colors[0] != row_colors[2]
+	)

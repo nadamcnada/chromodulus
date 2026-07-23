@@ -183,6 +183,8 @@ func _on_scoring_pressed() -> void:
 			info_dialog.open_with(GameText.ONE_LINER_SCORING_SYSTEM_BBCODE)
 		"one_liner_plus":
 			info_dialog.open_with(GameText.ONE_LINER_PLUS_SCORING_SYSTEM_BBCODE)
+		"puzzle", "puzzle_3", "puzzle_4", "puzzle_5":
+			info_dialog.open_with(GameText.PUZZLE_SCORING_SYSTEM_BBCODE)
 		_:
 			info_dialog.open_with(GameText.CLASSIC_SCORING_SYSTEM_BBCODE)
 
@@ -195,6 +197,8 @@ func _on_how_to_play_pressed() -> void:
 			info_dialog.open_with(GameText.ONE_LINER_HOW_TO_PLAY_BBCODE)
 		"one_liner_plus":
 			info_dialog.open_with(GameText.ONE_LINER_PLUS_HOW_TO_PLAY_BBCODE)
+		"puzzle", "puzzle_3", "puzzle_4", "puzzle_5":
+			info_dialog.open_with(GameText.PUZZLE_HOW_TO_PLAY_BBCODE)
 		_:
 			info_dialog.open_with(GameText.CLASSIC_HOW_TO_PLAY_BBCODE)
 

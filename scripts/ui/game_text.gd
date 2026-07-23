@@ -595,6 +595,97 @@ const ONE_LINER_PLUS_HOW_TO_PLAY_BBCODE := (
 	"Nexus Note: A Nexus is a cell that belongs to at least two independently scored patterns. Patterns sharing only endpoints still count. Overlapping patterns are allowed."
 )
 
+const PUZZLE_SOLVING_SECTION_BBCODE := (
+	"[font_size=20][b]Solving the Chromatic-Numerical Puzzle[/b][/font_size]\n" +
+	"All patterns must be chromo-numerical (color + number pattern).\n" +
+	"• All patterns work the same in forward and reverse - e.g. 12345 = 54321\n" +
+	"Note: White (W) is also eligible to be part of a pattern.\n\n" +
+
+	"[b]Numerical[/b]\n" +
+	"All rows, columns and diagonals must be part of a Run (sequential) or Cluster (same number).\n" +
+	"[indent]• A Run is defined as: for every adjacent pair, the difference is either +1 or -1 across the sequence\n" +
+	"• Wrapped runs are not allowed (e.g. 8901)\n" +
+	"• 0 can be at the beginning before \"1\" or at the end after \"9\" (e.g. 0123 or 7890)[/indent]\n\n" +
+	"Examples:\n" +
+	"[indent]123\n123\n123[/indent]\n" +
+	"[indent]555\n555\n555[/indent]\n\n" +
+
+	"[b]Monochrome:[/b]\n" +
+	"This is where all the cells are the same color. For example, all cells are red in color.\n\n" +
+
+	"[b]Different Rows/Columns, Different Colors[/b]\n" +
+	"This means that each individual row or column is the same color, but each row or column can differ from another.\n\n" +
+	"Examples:\n" +
+	"[indent]Top Row: Red\n" +
+	"Middle Row: Yellow\n" +
+	"Bottom Row: Red[/indent]\n" +
+	"[indent]Left Column: Blue\n" +
+	"Middle Column: White\n" +
+	"Right Column: Blue[/indent]\n" +
+	"[indent]Top Row: Red\n" +
+	"Middle Row: Red\n" +
+	"Bottom Row: Yellow[/indent]\n\n" +
+
+	"[b]Checkerboard Pattern[/b]\n" +
+	"There must be two colors in a checkerboard pattern across the entire grid."
+)
+
+## Shared by all three Puzzle sizes - the win-condition rules don't vary
+## with grid size, so there's one How to Play and one Scoring System entry
+## for 3x3/4x4/5x5 alike.
+const PUZZLE_HOW_TO_PLAY_BBCODE := (
+	"[font_size=28][b]Chromodulus Puzzle - How to Play[/b][/font_size]\n\n" +
+
+	"[font_size=20][b]Overview[/b][/font_size]\n" +
+	"Chromodulus Puzzle is a game that is played on a grid (3x3, 4x4 or 5x5). The cells of the grid are pre-filled with \"chromo-numerical\" squares, which are Red, Green, Blue or White in color, and also feature a single-digit number (0-9). The player then adds squares that they draw from a stock deck of squares. The color of the square being played changes the color of the cell being played upon, and the number of the square being played combines with the number being played upon to change the number. The objective of the game is to create one of the allowed chromatic-numerical patterns specified below, where every row, column and diagonal is part of a run (sequential) or cluster (same number).\n\n" +
+
+	"[font_size=20][b]Game Mechanics[/b][/font_size]\n" +
+	"The game starts with a pre-filled grid. For the 3x3 version, there are two initial draws of 10 squares each to the player's hand - three for the 4x4 and four for the 5x5. During each of these draws, the player can play up to 7 squares. When ready for the next draw, the player presses the \"Next Draw\" button. In the final draw, following the initial draws, the player can play up to ten out of the ten squares drawn. When ready, the player presses the End Game button. If the puzzle is solved before this, the confirmation popup will appear to declare that the player has successfully solved the puzzle.\n\n" +
+
+	"[font_size=20][b]Color Transformations[/b][/font_size]\n" +
+	"Existing Color + Added Color = New Color\n" +
+	"[indent]White + Red = Red\n" +
+	"White + Green = Green\n" +
+	"White + Blue = Blue\n" +
+	"Red + Green = Yellow\n" +
+	"Red + Blue = Purple\n" +
+	"Red + Red = Not Allowed\n" +
+	"Green + Red = Yellow\n" +
+	"Green + Blue = Aqua\n" +
+	"Green + Green = Not Allowed\n" +
+	"Blue + Red = Purple\n" +
+	"Blue + Green = Aqua\n" +
+	"Blue + Blue = Not Allowed\n" +
+	"Yellow + Red = Not Allowed\n" +
+	"Yellow + Green = Not Allowed\n" +
+	"Yellow + Blue = White\n" +
+	"Purple + Red = Not Allowed\n" +
+	"Purple + Blue = Not Allowed\n" +
+	"Purple + Green = White\n" +
+	"Aqua + Blue = Not Allowed\n" +
+	"Aqua + Green = Not Allowed\n" +
+	"Aqua + Red = White[/indent]\n" +
+	"This system forces a color cycle where one each of Red, Green and Blue must be played before one of these colors can repeat. Once the cell color becomes or returns to White, then any of the squares in the player's hand can be played on that cell.\n\n" +
+
+	"[font_size=20][b]Number Transformations[/b][/font_size]\n" +
+	"The number of the square from the player's hand is added to the number of the cell upon which it is played. For example, a Red-2 square added to a Green-3 cell results in a Yellow-5.\n" +
+	"Modular arithmetic is used to keep all numbers single digit. For example, a Red-9 square added to a Green-2 cell results in a Yellow-1 (9 + 2 = 1).\n\n" +
+
+	"[font_size=20][b]Wildcards[/b][/font_size]\n" +
+	"[indent]1. [b]Color Wildcard:[/b] has a preset number; the player decides the color of their choice upon placement (Red, Blue or Green).\n" +
+	"2. [b]Number Wildcard:[/b] has a preset color; the player decides the number of their choice upon placement.\n" +
+	"3. [b]Chromodulus Wildcard:[/b] the player decides both number and color upon placement.\n" +
+	"4. [b]Invert Wildcard:[/b] the player applies this to a square they are placing onto the grid, which subtracts the square from the hand from the square in the grid where it is being placed.[/indent]\n" +
+	"To play a Wildcard square, the player clicks on that square. A dialogue window will appear. If it is a Color Wildcard, the player is presented with these options: Red, Green, Blue, Cancel. If it is a Number Wildcard, the player is presented with these options: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9. If it is a Chromodulus Wildcard, the player is presented with both the Color and Number options. For the Invert Wildcard, the player is given the option to apply it to a square in their hand. All wildcards must be played or discarded during the turn in which they are drawn.\n\n" +
+
+	PUZZLE_SOLVING_SECTION_BBCODE
+)
+
+const PUZZLE_SCORING_SYSTEM_BBCODE := (
+	"[font_size=28][b]Chromodulus Puzzle Scoring System[/b][/font_size]\n\n" +
+	PUZZLE_SOLVING_SECTION_BBCODE
+)
+
 const ONE_LINER_PLUS_SCORING_SYSTEM_BBCODE := (
 	"[font_size=28][b]Chromodulus One-Liner Plus Scoring System[/b][/font_size]\n\n" +
 	"• All patterns must be chromo-numerical (color + number pattern).\n" +

@@ -607,7 +607,7 @@ const PUZZLE_SOLVING_SECTION_BBCODE := (
 	"• Wrapped runs are not allowed (e.g. 8901)\n" +
 	"• 0 can be at the beginning before \"1\" or at the end after \"9\" (e.g. 0123 or 7890)[/indent]\n\n" +
 	"Examples:\n" +
-	"[indent]123\n123\n123[/indent]\n" +
+	"[indent]123\n123\n123[/indent]\n\n" +
 	"[indent]555\n555\n555[/indent]\n\n" +
 
 	"[b]Monochrome:[/b]\n" +
@@ -618,10 +618,10 @@ const PUZZLE_SOLVING_SECTION_BBCODE := (
 	"Examples:\n" +
 	"[indent]Top Row: Red\n" +
 	"Middle Row: Yellow\n" +
-	"Bottom Row: Red[/indent]\n" +
+	"Bottom Row: Red[/indent]\n\n" +
 	"[indent]Left Column: Blue\n" +
 	"Middle Column: White\n" +
-	"Right Column: Blue[/indent]\n" +
+	"Right Column: Blue[/indent]\n\n" +
 	"[indent]Top Row: Red\n" +
 	"Middle Row: Red\n" +
 	"Bottom Row: Yellow[/indent]\n\n" +

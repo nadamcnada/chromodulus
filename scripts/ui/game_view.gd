@@ -234,6 +234,10 @@ func _build_reference_panel() -> Control:
 	content.add_child(_bullet("Numbers add together"))
 	content.add_child(_bullet("Modular Arithmetic keeps numbers single digit (e.g. 8 + 5 = 3)"))
 
+	if ruleset == "PUZZLE" and puzzle_size == 3:
+		_build_puzzle_3x3_reference(content)
+		return outer
+
 	content.add_child(HSeparator.new())
 	content.add_child(_rich_title("Scoring Patterns"))
 	if not ruleset in ["ONE_LINER", "ONE_LINER_PLUS"]:
@@ -420,6 +424,73 @@ func _build_one_row_nexus_example(colors: Array, numbers: Array, nexus_indices: 
 		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cell.set_data(colors[i], numbers[i], nexus_indices.has(i))
 	return row
+
+
+## The Puzzle reference panel replaces Scoring Patterns onward with the
+## puzzle's own win-condition summary and example solved grids.
+func _build_puzzle_3x3_reference(content: VBoxContainer) -> void:
+	content.add_child(HSeparator.new())
+	content.add_child(_rich_title("Solve the Chromatic-Numerical Puzzle"))
+	content.add_child(_bullet("Every row, column and diagonal must be a sequential (run) or same-number (cluster) pattern"))
+	content.add_child(_bullet("Forward or backward (e.g. 321)"))
+	content.add_child(_bullet("\"0\" can be high or low (e.g. 012 or 890)"))
+
+	content.add_child(_rich_subtitle("Example Solutions"))
+
+	content.add_child(_rich_subtitle("Monochromatic"))
+	content.add_child(_build_mini_grid([
+		[{"color": "R", "number": 1}, {"color": "R", "number": 2}, {"color": "R", "number": 3}],
+		[{"color": "R", "number": 1}, {"color": "R", "number": 2}, {"color": "R", "number": 3}],
+		[{"color": "R", "number": 1}, {"color": "R", "number": 2}, {"color": "R", "number": 3}],
+	]))
+	content.add_child(_build_mini_grid([
+		[{"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}],
+		[{"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}],
+		[{"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}],
+	]))
+
+	content.add_child(_rich_subtitle("Different Rows/Columns, Different Colors"))
+	content.add_child(_build_mini_grid([
+		[{"color": "B", "number": 0}, {"color": "B", "number": 9}, {"color": "B", "number": 8}],
+		[{"color": "W", "number": 0}, {"color": "W", "number": 9}, {"color": "W", "number": 8}],
+		[{"color": "B", "number": 0}, {"color": "B", "number": 9}, {"color": "B", "number": 8}],
+	]))
+	content.add_child(_build_mini_grid([
+		[{"color": "P", "number": 7}, {"color": "A", "number": 7}, {"color": "G", "number": 7}],
+		[{"color": "P", "number": 7}, {"color": "A", "number": 7}, {"color": "G", "number": 7}],
+		[{"color": "P", "number": 7}, {"color": "A", "number": 7}, {"color": "G", "number": 7}],
+	]))
+	content.add_child(_build_mini_grid([
+		[{"color": "R", "number": 4}, {"color": "R", "number": 5}, {"color": "R", "number": 6}],
+		[{"color": "R", "number": 4}, {"color": "R", "number": 5}, {"color": "R", "number": 6}],
+		[{"color": "W", "number": 4}, {"color": "W", "number": 5}, {"color": "W", "number": 6}],
+	]))
+
+	content.add_child(_rich_subtitle("Checkerboard"))
+	content.add_child(_build_mini_grid([
+		[{"color": "Y", "number": 2}, {"color": "R", "number": 1}, {"color": "Y", "number": 0}],
+		[{"color": "R", "number": 2}, {"color": "Y", "number": 1}, {"color": "R", "number": 0}],
+		[{"color": "Y", "number": 2}, {"color": "R", "number": 1}, {"color": "Y", "number": 0}],
+	]))
+
+
+## A small, non-interactive NxN grid of CellView tiles illustrating a solved
+## Puzzle example. [param rows] is a row-major Array of Arrays of
+## {"color":String, "number":int} entries.
+func _build_mini_grid(rows: Array) -> Control:
+	var grid := GridContainer.new()
+	grid.columns = rows[0].size()
+	grid.add_theme_constant_override("h_separation", 2)
+	grid.add_theme_constant_override("v_separation", 2)
+	for row in rows:
+		for entry in row:
+			var cell := CellView.new()
+			grid.add_child(cell)
+			cell.custom_minimum_size = Vector2(36, 36)
+			cell.disabled = true
+			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			cell.set_data(entry["color"], entry["number"])
+	return grid
 
 
 # ---------------------------------------------------------------------------

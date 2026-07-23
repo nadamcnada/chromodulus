@@ -242,6 +242,10 @@ func _build_reference_panel() -> Control:
 		_build_puzzle_4x4_reference(content)
 		return outer
 
+	if ruleset == "PUZZLE" and puzzle_size == 5:
+		_build_puzzle_5x5_reference(content)
+		return outer
+
 	content.add_child(HSeparator.new())
 	content.add_child(_rich_title("Scoring Patterns"))
 	if not ruleset in ["ONE_LINER", "ONE_LINER_PLUS"]:
@@ -527,6 +531,64 @@ func _build_puzzle_4x4_reference(content: VBoxContainer) -> void:
 		[{"color": "Y", "number": 3}, {"color": "R", "number": 2}, {"color": "Y", "number": 1}, {"color": "R", "number": 0}],
 		[{"color": "R", "number": 3}, {"color": "Y", "number": 2}, {"color": "R", "number": 1}, {"color": "Y", "number": 0}],
 		[{"color": "Y", "number": 3}, {"color": "R", "number": 2}, {"color": "Y", "number": 1}, {"color": "R", "number": 0}],
+	]))
+
+
+func _build_puzzle_5x5_reference(content: VBoxContainer) -> void:
+	content.add_child(HSeparator.new())
+	content.add_child(_rich_title("Solve the Chromatic-Numerical Puzzle"))
+	content.add_child(_bullet("Every row, column and diagonal must be a sequential (run) or same-number (cluster) pattern"))
+	content.add_child(_bullet("Forward or backward (e.g. 54321)"))
+	content.add_child(_bullet("\"0\" can be high or low (e.g. 01234 or 67890)"))
+
+	content.add_child(_rich_subtitle("Example Solutions"))
+
+	content.add_child(_rich_subtitle("Monochromatic"))
+	content.add_child(_build_mini_grid([
+		[{"color": "R", "number": 1}, {"color": "R", "number": 2}, {"color": "R", "number": 3}, {"color": "R", "number": 4}, {"color": "R", "number": 5}],
+		[{"color": "R", "number": 1}, {"color": "R", "number": 2}, {"color": "R", "number": 3}, {"color": "R", "number": 4}, {"color": "R", "number": 5}],
+		[{"color": "R", "number": 1}, {"color": "R", "number": 2}, {"color": "R", "number": 3}, {"color": "R", "number": 4}, {"color": "R", "number": 5}],
+		[{"color": "R", "number": 1}, {"color": "R", "number": 2}, {"color": "R", "number": 3}, {"color": "R", "number": 4}, {"color": "R", "number": 5}],
+		[{"color": "R", "number": 1}, {"color": "R", "number": 2}, {"color": "R", "number": 3}, {"color": "R", "number": 4}, {"color": "R", "number": 5}],
+	]))
+	content.add_child(_build_mini_grid([
+		[{"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}],
+		[{"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}],
+		[{"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}],
+		[{"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}],
+		[{"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}, {"color": "Y", "number": 5}],
+	]))
+
+	content.add_child(_rich_subtitle("Different Rows/Columns, Different Colors"))
+	content.add_child(_build_mini_grid([
+		[{"color": "B", "number": 0}, {"color": "B", "number": 9}, {"color": "B", "number": 8}, {"color": "B", "number": 7}, {"color": "B", "number": 6}],
+		[{"color": "W", "number": 0}, {"color": "W", "number": 9}, {"color": "W", "number": 8}, {"color": "W", "number": 7}, {"color": "W", "number": 6}],
+		[{"color": "B", "number": 0}, {"color": "B", "number": 9}, {"color": "B", "number": 8}, {"color": "B", "number": 7}, {"color": "B", "number": 6}],
+		[{"color": "W", "number": 0}, {"color": "W", "number": 9}, {"color": "W", "number": 8}, {"color": "W", "number": 7}, {"color": "W", "number": 6}],
+		[{"color": "B", "number": 0}, {"color": "B", "number": 9}, {"color": "B", "number": 8}, {"color": "B", "number": 7}, {"color": "B", "number": 6}],
+	]))
+	content.add_child(_build_mini_grid([
+		[{"color": "P", "number": 7}, {"color": "A", "number": 7}, {"color": "G", "number": 7}, {"color": "W", "number": 7}, {"color": "P", "number": 7}],
+		[{"color": "P", "number": 7}, {"color": "A", "number": 7}, {"color": "G", "number": 7}, {"color": "W", "number": 7}, {"color": "P", "number": 7}],
+		[{"color": "P", "number": 7}, {"color": "A", "number": 7}, {"color": "G", "number": 7}, {"color": "W", "number": 7}, {"color": "P", "number": 7}],
+		[{"color": "P", "number": 7}, {"color": "A", "number": 7}, {"color": "G", "number": 7}, {"color": "W", "number": 7}, {"color": "P", "number": 7}],
+		[{"color": "P", "number": 7}, {"color": "A", "number": 7}, {"color": "G", "number": 7}, {"color": "W", "number": 7}, {"color": "P", "number": 7}],
+	]))
+	content.add_child(_build_mini_grid([
+		[{"color": "R", "number": 4}, {"color": "R", "number": 5}, {"color": "R", "number": 6}, {"color": "R", "number": 7}, {"color": "R", "number": 8}],
+		[{"color": "R", "number": 4}, {"color": "R", "number": 5}, {"color": "R", "number": 6}, {"color": "R", "number": 7}, {"color": "R", "number": 8}],
+		[{"color": "W", "number": 4}, {"color": "W", "number": 5}, {"color": "W", "number": 6}, {"color": "W", "number": 7}, {"color": "R", "number": 8}],
+		[{"color": "W", "number": 4}, {"color": "W", "number": 5}, {"color": "W", "number": 6}, {"color": "W", "number": 7}, {"color": "R", "number": 8}],
+		[{"color": "R", "number": 4}, {"color": "R", "number": 5}, {"color": "R", "number": 6}, {"color": "R", "number": 7}, {"color": "R", "number": 8}],
+	]))
+
+	content.add_child(_rich_subtitle("Checkerboard"))
+	content.add_child(_build_mini_grid([
+		[{"color": "Y", "number": 4}, {"color": "R", "number": 3}, {"color": "Y", "number": 2}, {"color": "R", "number": 1}, {"color": "Y", "number": 0}],
+		[{"color": "R", "number": 4}, {"color": "Y", "number": 3}, {"color": "R", "number": 2}, {"color": "Y", "number": 1}, {"color": "R", "number": 0}],
+		[{"color": "Y", "number": 4}, {"color": "R", "number": 3}, {"color": "Y", "number": 2}, {"color": "R", "number": 1}, {"color": "Y", "number": 0}],
+		[{"color": "R", "number": 4}, {"color": "Y", "number": 3}, {"color": "R", "number": 2}, {"color": "Y", "number": 1}, {"color": "R", "number": 0}],
+		[{"color": "Y", "number": 4}, {"color": "R", "number": 3}, {"color": "Y", "number": 2}, {"color": "R", "number": 1}, {"color": "Y", "number": 0}],
 	]))
 
 

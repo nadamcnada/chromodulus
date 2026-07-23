@@ -7,6 +7,7 @@ var classic_view: GameView
 var plus_view: GameView
 var one_liner_view: GameView
 var one_liner_plus_view: GameView
+var ultimate_view: GameView
 var puzzle_selector: Control
 var puzzle_3_view: GameView
 var puzzle_4_view: GameView
@@ -54,6 +55,11 @@ func _build_ui() -> void:
 	one_liner_plus_view.ruleset = "ONE_LINER_PLUS"
 	one_liner_plus_view.set_anchors_preset(Control.PRESET_FULL_RECT)
 	content_area.add_child(one_liner_plus_view)
+
+	ultimate_view = GameView.new()
+	ultimate_view.ruleset = "ULTIMATE"
+	ultimate_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_area.add_child(ultimate_view)
 
 	puzzle_selector = _build_puzzle_selector()
 	puzzle_selector.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -159,6 +165,7 @@ func _build_sidebar() -> Control:
 	_nav_buttons["one_liner"] = _add_nav_button(vbox, "One-Liner (Solo Play)", func(): _show_view("one_liner"))
 	_nav_buttons["one_liner_plus"] = _add_nav_button(vbox, "One-Liner Plus (Solo Play)", func(): _show_view("one_liner_plus"))
 	_nav_buttons["puzzle"] = _add_nav_button(vbox, "Puzzle (Solo Play)", func(): _show_view("puzzle"))
+	_nav_buttons["ultimate"] = _add_nav_button(vbox, "Ultimate (Solo Play)", func(): _show_view("ultimate"))
 	for label in ["Duo Play (2-player)", "Club Play (4-player)", "Tournament Mode"]:
 		var btn := _add_nav_button(vbox, label, func(): pass)
 		btn.disabled = true
@@ -175,6 +182,8 @@ func _build_sidebar() -> Control:
 	return panel
 
 
+## Ultimate doesn't have its own Scoring System copy yet, so it borrows
+## Classic's until version-specific text is provided.
 func _on_scoring_pressed() -> void:
 	match _current_view:
 		"plus":
@@ -199,6 +208,8 @@ func _on_how_to_play_pressed() -> void:
 			info_dialog.open_with(GameText.ONE_LINER_PLUS_HOW_TO_PLAY_BBCODE)
 		"puzzle", "puzzle_3", "puzzle_4", "puzzle_5":
 			info_dialog.open_with(GameText.PUZZLE_HOW_TO_PLAY_BBCODE)
+		"ultimate":
+			info_dialog.open_with(GameText.ULTIMATE_HOW_TO_PLAY_BBCODE)
 		_:
 			info_dialog.open_with(GameText.CLASSIC_HOW_TO_PLAY_BBCODE)
 
@@ -228,6 +239,7 @@ func _show_view(which: String) -> void:
 	plus_view.visible = which == "plus"
 	one_liner_view.visible = which == "one_liner"
 	one_liner_plus_view.visible = which == "one_liner_plus"
+	ultimate_view.visible = which == "ultimate"
 	puzzle_selector.visible = which == "puzzle"
 	puzzle_3_view.visible = which == "puzzle_3"
 	puzzle_4_view.visible = which == "puzzle_4"

@@ -2,20 +2,22 @@ class_name GameState
 extends RefCounted
 ##
 ## GameState: the authoritative Chromodulus game engine, shared by every
-## game version (Classic, Plus, One-Liner, One-Liner Plus, Puzzle, ...). Each
-## GameView owns its own instance - these are separate, independent games,
-## not one shared session - and the [member ruleset] tells PatternEngine
-## which scoring rules to apply.
+## game version (Classic, Plus, One-Liner, One-Liner Plus, Puzzle, Ultimate,
+## ...). Each GameView owns its own instance - these are separate,
+## independent games, not one shared session - and the [member ruleset]
+## tells PatternEngine which scoring rules to apply.
 ##
-## Classic/Plus own a 7x7 grid and a five-draw sequence: four 10-card draws
-## (play up to 7, then advance with Next Draw) followed by a fifth and final
-## 10-card draw (play any/all, then End Game). One-Liner/One-Liner Plus own a
-## single 1x10 row, and Puzzle an NxN grid (3x3, 4x4 or 5x5, per
-## [member puzzle_size]), each with a three-draw sequence instead (two
-## 10-card draws, play up to 7 each, then a third and final draw playing
-## any/all). Undo steps back one played square at a time but never crosses
-## into a previous draw - it can only go as far back as the current draw's
-## freshly dealt hand.
+## Classic/Plus/Ultimate own a 7x7 grid and a five-draw sequence: four
+## 10-card draws (play up to 7, then advance with Next Draw) followed by a
+## fifth and final 10-card draw (play any/all, then End Game). Ultimate's
+## grid starts pre-filled from all seven colors instead of four (see
+## _random_cell()) - hand squares and wildcards are unaffected, still
+## Red/Green/Blue only. One-Liner/One-Liner Plus own a single 1x10 row, and
+## Puzzle an NxN grid (3x3, 4x4 or 5x5, per [member puzzle_size]), each with
+## a three-draw sequence instead (two 10-card draws, play up to 7 each, then
+## a third and final draw playing any/all). Undo steps back one played
+## square at a time but never crosses into a previous draw - it can only go
+## as far back as the current draw's freshly dealt hand.
 ##
 ## Puzzle is win/lose rather than scored: end_game() checks
 ## PatternEngine.check_puzzle_solved() instead of score_grid(). It also ends
@@ -31,7 +33,7 @@ signal puzzle_solved
 const MAX_PLAYS_PER_DRAW := 7
 const DRAW_SIZE := 10
 
-var ruleset: String = "CLASSIC"  # "CLASSIC" | "PLUS" | "ONE_LINER" | "ONE_LINER_PLUS" | "PUZZLE"
+var ruleset: String = "CLASSIC"  # "CLASSIC" | "PLUS" | "ONE_LINER" | "ONE_LINER_PLUS" | "PUZZLE" | "ULTIMATE"
 var puzzle_size: int = 3        # 3, 4 or 5 - only meaningful when ruleset == "PUZZLE"
 
 var grid_rows: int = 7
@@ -89,7 +91,10 @@ func new_game() -> void:
 
 
 func _random_cell() -> Dictionary:
-	var color: String = ColorRules.STARTING_COLORS[randi() % ColorRules.STARTING_COLORS.size()]
+	# Ultimate pre-fills from all seven colors instead of the usual four -
+	# hand squares/wildcards are unaffected, still Red/Green/Blue only.
+	var pool: Array = ColorRules.ALL_CELL_COLORS if ruleset == "ULTIMATE" else ColorRules.STARTING_COLORS
+	var color: String = pool[randi() % pool.size()]
 	var number: int = randi() % 10
 	return {"color": color, "number": number}
 

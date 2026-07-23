@@ -2,8 +2,8 @@ class_name PatternEngine
 extends RefCounted
 ##
 ## PatternEngine: pure, stateless scoring of a finished (or in-progress) grid.
-## Takes a [param ruleset] ("CLASSIC", "PLUS", "ONE_LINER" or "ONE_LINER_PLUS")
-## so the same engine can serve every game version.
+## Takes a [param ruleset] ("CLASSIC", "PLUS", "ONE_LINER", "ONE_LINER_PLUS"
+## or "ULTIMATE") so the same engine can serve every game version.
 ##
 ## CLASSIC: every scoring pattern is chromo-numerical - a Run or a Cluster of
 ## the exact same color. There are no separate numeric-only / chromatic-only
@@ -30,9 +30,19 @@ extends RefCounted
 ##
 ## PUZZLE: a 3x3 grid, win/lose rather than scored - see check_puzzle_solved().
 ##
+## ULTIMATE: a 7x7 grid like Classic/Plus (starting fill drawn from all seven
+## colors rather than four - that's a GameState concern, not PatternEngine's),
+## with everything Plus allows plus five more chromo-numerical pattern types:
+## Doublet, Pyramid, Plateau, Staircase and Full Spectrum (see the predicates
+## below each pattern's score table). Each of these five is its own fused
+## chromatic+numerical shape (not an independent numeric x chromatic pairing
+## like Plus's six), and each only qualifies at specific lengths. When more
+## than one pattern type qualifies for the exact same window, the
+## highest-scoring one wins (see _find_best_pattern_ultimate).
+##
 ## Design notes, consistent since the original Base engine:
-## - Classic/Plus: 7 rows, 7 columns, and all diagonals/anti-diagonals of
-##   length >= 4 (off-center diagonals included), for 28 lines total. Per
+## - Classic/Plus/Ultimate: 7 rows, 7 columns, and all diagonals/anti-diagonals
+##   of length >= 4 (off-center diagonals included), for 28 lines total. Per
 ##   line, only the single longest qualifying window is scored (shorter
 ##   sub-windows of the same line are never additionally scored).
 ## - Nexus bonuses count, per cell, how many independently scored patterns
@@ -40,9 +50,15 @@ extends RefCounted
 ##   the same line) cover that cell.
 
 const RUN_EXTENDED_SEQUENCE: Array[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+const ALL_SEVEN_COLORS: Array[String] = ["R", "G", "B", "W", "Y", "P", "A"]
 
 const SCORE_TABLE: Dictionary = {4: 2, 5: 5, 6: 10, 7: 20}
 const ONE_LINER_SCORE_TABLE: Dictionary = {4: 2, 5: 5, 6: 10, 7: 20, 8: 40, 9: 70, 10: 100}
+const DOUBLET_SCORE_TABLE: Dictionary = {4: 2, 6: 10}
+const PYRAMID_SCORE_TABLE: Dictionary = {5: 10, 7: 30}
+const PLATEAU_SCORE_TABLE: Dictionary = {6: 20, 7: 30}
+const STAIRCASE_SCORE: int = 20
+const FULL_SPECTRUM_SCORE: int = 40
 
 const ONE_LINER_RULESETS: Array[String] = ["ONE_LINER", "ONE_LINER_PLUS"]
 
@@ -72,10 +88,13 @@ static func _score_grid_lines(grid: Array, ruleset: String) -> Array:
 			var cell: Dictionary = grid[p.x][p.y]
 			numbers.append(cell["number"])
 			colors.append(cell["color"])
-		var pattern: Dictionary = (
-			_find_best_pattern_plus(numbers, colors) if ruleset == "PLUS"
-			else _find_best_pattern(numbers, colors)
-		)
+		var pattern: Dictionary
+		if ruleset == "PLUS":
+			pattern = _find_best_pattern_plus(numbers, colors)
+		elif ruleset == "ULTIMATE":
+			pattern = _find_best_pattern_ultimate(numbers, colors)
+		else:
+			pattern = _find_best_pattern(numbers, colors)
 		if pattern.is_empty():
 			continue
 		var cells: Array = []
@@ -321,6 +340,171 @@ static func _chromatic_shape(window: Array) -> String:
 	if _is_alternating(window):
 		return "ALT_COLOR"
 	return ""
+
+
+## Ultimate: everything Plus checks (Run/Cluster/Alternating Numbers crossed
+## with Monochrome/Alternating Color, sharing SCORE_TABLE) plus Doublet,
+## Pyramid, Plateau, Staircase and Full Spectrum, each its own fused
+## chromatic+numerical shape valid only at specific lengths. If more than one
+## pattern type qualifies for the same exact window, the highest-scoring one
+## is returned (per the Scoring System's tie-break rule).
+static func _find_best_pattern_ultimate(numbers: Array, colors: Array) -> Dictionary:
+	var n: int = numbers.size()
+	for length in range(n, 3, -1):
+		for start in range(0, n - length + 1):
+			var num_window: Array = numbers.slice(start, start + length)
+			var col_window: Array = colors.slice(start, start + length)
+			var best_type: String = ""
+			var best_score: int = -1
+
+			var numeric_type: String = _numeric_shape(num_window)
+			var chromatic_type: String = _chromatic_shape_ultimate(col_window)
+			if numeric_type != "" and chromatic_type != "":
+				var score: int = (
+					FULL_SPECTRUM_SCORE if chromatic_type == "FULL_SPECTRUM"
+					else SCORE_TABLE[length]
+				)
+				if score > best_score:
+					best_score = score
+					best_type = "%s_%s" % [numeric_type, chromatic_type]
+
+			if DOUBLET_SCORE_TABLE.has(length) and _is_doublet(num_window, col_window):
+				var score: int = DOUBLET_SCORE_TABLE[length]
+				if score > best_score:
+					best_score = score
+					best_type = "DOUBLET"
+
+			if PYRAMID_SCORE_TABLE.has(length) and _is_pyramid(num_window, col_window):
+				var score: int = PYRAMID_SCORE_TABLE[length]
+				if score > best_score:
+					best_score = score
+					best_type = "PYRAMID"
+
+			if PLATEAU_SCORE_TABLE.has(length) and _is_plateau(num_window, col_window):
+				var score: int = PLATEAU_SCORE_TABLE[length]
+				if score > best_score:
+					best_score = score
+					best_type = "PLATEAU"
+
+			if length == 6 and _is_staircase(num_window, col_window):
+				if STAIRCASE_SCORE > best_score:
+					best_score = STAIRCASE_SCORE
+					best_type = "STAIRCASE"
+
+			if best_type != "":
+				return {"type": best_type, "start": start, "length": length, "score": best_score}
+	return {}
+
+
+## Same as _chromatic_shape, plus Full Spectrum: all seven colors present,
+## each exactly once (only possible at length 7).
+static func _chromatic_shape_ultimate(window: Array) -> String:
+	if _is_same(window):
+		return "MONOCHROME"
+	if _is_alternating(window):
+		return "ALT_COLOR"
+	if _is_full_spectrum(window):
+		return "FULL_SPECTRUM"
+	return ""
+
+
+static func _is_full_spectrum(window: Array) -> bool:
+	if window.size() != 7:
+		return false
+	var seen: Dictionary = {}
+	for c in window:
+		if seen.has(c):
+			return false
+		seen[c] = true
+	return true
+
+
+## Shared by Doublet/Pyramid/Plateau/Staircase: wherever a number reappears
+## within the window, it must keep the same color throughout.
+static func _colors_consistent_with_numbers(numbers: Array, colors: Array) -> bool:
+	var color_for_number: Dictionary = {}
+	for i in range(numbers.size()):
+		var num = numbers[i]
+		var col = colors[i]
+		if color_for_number.has(num):
+			if color_for_number[num] != col:
+				return false
+		else:
+			color_for_number[num] = col
+	return true
+
+
+## Pairs of equal numbers (AABB or AABBCC); adjacent pairs must differ, but a
+## number can reappear in a non-adjacent pair (e.g. AABBAA). Length is 4 or 6.
+static func _is_doublet(numbers: Array, colors: Array) -> bool:
+	var pair_count: int = numbers.size() / 2
+	var pair_values: Array = []
+	for p in range(pair_count):
+		var a = numbers[p * 2]
+		var b = numbers[p * 2 + 1]
+		if a != b:
+			return false
+		pair_values.append(a)
+	for p in range(pair_count - 1):
+		if pair_values[p] == pair_values[p + 1]:
+			return false
+	return _colors_consistent_with_numbers(numbers, colors)
+
+
+## A palindrome (numbers[i] == numbers[n-1-i]) with no two adjacent numbers
+## equal anywhere. Length is 5 or 7.
+static func _is_pyramid(numbers: Array, colors: Array) -> bool:
+	var n: int = numbers.size()
+	for i in range(n):
+		if numbers[i] != numbers[n - 1 - i]:
+			return false
+	for i in range(n - 1):
+		if numbers[i] == numbers[i + 1]:
+			return false
+	return _colors_consistent_with_numbers(numbers, colors)
+
+
+## Same palindrome requirement as Pyramid, except the true center must repeat
+## with its neighbor(s) - for even length the two middle cells (already
+## forced equal by the palindrome itself), for odd length the middle cell
+## and at least one neighbor. No other adjacent repeats are allowed. Length
+## is 6 or 7.
+static func _is_plateau(numbers: Array, colors: Array) -> bool:
+	var n: int = numbers.size()
+	for i in range(n):
+		if numbers[i] != numbers[n - 1 - i]:
+			return false
+
+	var exempt: Dictionary = {}
+	if n % 2 == 0:
+		exempt[n / 2 - 1] = true
+	else:
+		var c: int = (n - 1) / 2
+		if numbers[c] != numbers[c - 1]:
+			return false
+		exempt[c - 1] = true
+		exempt[c] = true
+
+	for i in range(n - 1):
+		if not exempt.has(i) and numbers[i] == numbers[i + 1]:
+			return false
+	return _colors_consistent_with_numbers(numbers, colors)
+
+
+## Exactly 6 cells matching [a,b,b,c,c,c] (forward) or [c,c,c,b,b,a]
+## (reverse), where a != b and b != c (a may equal c).
+static func _is_staircase(numbers: Array, colors: Array) -> bool:
+	var forward_ok: bool = (
+		numbers[1] == numbers[2] and numbers[3] == numbers[4] and numbers[4] == numbers[5]
+		and numbers[0] != numbers[1] and numbers[1] != numbers[3]
+	)
+	var reverse_ok: bool = (
+		numbers[0] == numbers[1] and numbers[1] == numbers[2] and numbers[3] == numbers[4]
+		and numbers[2] != numbers[3] and numbers[3] != numbers[5]
+	)
+	if not (forward_ok or reverse_ok):
+		return false
+	return _colors_consistent_with_numbers(numbers, colors)
 
 
 # ---------------------------------------------------------------------------

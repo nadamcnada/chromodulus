@@ -873,4 +873,11 @@ func _type_name(t: String) -> String:
 		"CLUSTER_ALT_COLOR": return "Cluster — Alternating Color"
 		"ALT_NUM_MONOCHROME": return "Alternating Numbers — Same Color"
 		"ALT_NUM_ALT_COLOR": return "Alternating Numbers — Alternating Color"
+		"RUN_FULL_SPECTRUM": return "Run — Full Spectrum"
+		"CLUSTER_FULL_SPECTRUM": return "Cluster — Full Spectrum"
+		"ALT_NUM_FULL_SPECTRUM": return "Alternating Numbers — Full Spectrum"
+		"DOUBLET": return "Doublet"
+		"PYRAMID": return "Pyramid"
+		"PLATEAU": return "Plateau"
+		"STAIRCASE": return "Staircase"
 		_: return t

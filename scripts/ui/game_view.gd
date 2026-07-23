@@ -577,8 +577,8 @@ func _build_puzzle_5x5_reference(content: VBoxContainer) -> void:
 	content.add_child(_build_mini_grid([
 		[{"color": "R", "number": 4}, {"color": "R", "number": 5}, {"color": "R", "number": 6}, {"color": "R", "number": 7}, {"color": "R", "number": 8}],
 		[{"color": "R", "number": 4}, {"color": "R", "number": 5}, {"color": "R", "number": 6}, {"color": "R", "number": 7}, {"color": "R", "number": 8}],
-		[{"color": "W", "number": 4}, {"color": "W", "number": 5}, {"color": "W", "number": 6}, {"color": "W", "number": 7}, {"color": "R", "number": 8}],
-		[{"color": "W", "number": 4}, {"color": "W", "number": 5}, {"color": "W", "number": 6}, {"color": "W", "number": 7}, {"color": "R", "number": 8}],
+		[{"color": "W", "number": 4}, {"color": "W", "number": 5}, {"color": "W", "number": 6}, {"color": "W", "number": 7}, {"color": "W", "number": 8}],
+		[{"color": "W", "number": 4}, {"color": "W", "number": 5}, {"color": "W", "number": 6}, {"color": "W", "number": 7}, {"color": "W", "number": 8}],
 		[{"color": "R", "number": 4}, {"color": "R", "number": 5}, {"color": "R", "number": 6}, {"color": "R", "number": 7}, {"color": "R", "number": 8}],
 	]))
 

@@ -269,7 +269,7 @@ func _build_reference_panel() -> Control:
 		{"color": "G", "number": 5}, {"color": "G", "number": 5},
 	]))
 
-	if ruleset in ["PLUS", "ONE_LINER_PLUS"]:
+	if ruleset in ["PLUS", "ONE_LINER_PLUS", "ULTIMATE"]:
 		content.add_child(_rich_subtitle("Run — Alternating Color"))
 		content.add_child(_example_row([
 			{"color": "B", "number": 1}, {"color": "W", "number": 2},
@@ -292,6 +292,44 @@ func _build_reference_panel() -> Control:
 		content.add_child(_example_row([
 			{"color": "R", "number": 1}, {"color": "R", "number": 2},
 			{"color": "R", "number": 1}, {"color": "R", "number": 2},
+		]))
+
+	if ruleset == "ULTIMATE":
+		content.add_child(_rich_subtitle("Doublet"))
+		content.add_child(_example_row([
+			{"color": "R", "number": 1}, {"color": "R", "number": 1},
+			{"color": "Y", "number": 2}, {"color": "Y", "number": 2},
+		]))
+
+		content.add_child(_rich_subtitle("Pyramid"))
+		content.add_child(_example_row([
+			{"color": "B", "number": 1}, {"color": "W", "number": 2},
+			{"color": "A", "number": 3}, {"color": "W", "number": 2},
+			{"color": "B", "number": 1},
+		]))
+
+		content.add_child(_rich_subtitle("Plateau"))
+		content.add_child(_example_row([
+			{"color": "G", "number": 1}, {"color": "Y", "number": 2},
+			{"color": "P", "number": 3}, {"color": "P", "number": 3},
+			{"color": "Y", "number": 2}, {"color": "G", "number": 1},
+		]))
+
+		content.add_child(_rich_subtitle("Staircase"))
+		content.add_child(_example_row([
+			{"color": "B", "number": 1}, {"color": "Y", "number": 2},
+			{"color": "Y", "number": 2}, {"color": "R", "number": 3},
+			{"color": "R", "number": 3}, {"color": "R", "number": 3},
+		]))
+
+		content.add_child(_rich_subtitle("Full Spectrum"))
+		content.add_child(_bullet("One of each color across row, column or diagonal"))
+		content.add_child(_bullet("Applies to Runs (e.g. 1-7), Clusters (e.g. 7's) or Alternating Numbers"))
+		content.add_child(_example_row([
+			{"color": "R", "number": 1}, {"color": "Y", "number": 2},
+			{"color": "G", "number": 3}, {"color": "A", "number": 4},
+			{"color": "B", "number": 5}, {"color": "P", "number": 6},
+			{"color": "W", "number": 7},
 		]))
 
 	content.add_child(_rich_subtitle("Nexus Cells"))

@@ -694,7 +694,7 @@ const ULTIMATE_HOW_TO_PLAY_BBCODE := (
 	"Chromodulus Ultimate is a game that is played on a 7x7 grid. The cells of the grid are pre-filled with \"chromo-numerical\" squares, which are Red, Green, Blue, Purple, Yellow, Aqua or White in color, and also feature a single-digit number (0-9). The player then adds squares that they draw from a stock deck of squares. The color of the square being played changes the color of the cell being played upon, and the number of the square being played combines with the number being played upon to change the number. The objective of the game is to create numerical and chromatic patterns to maximize the total score. These are chromo-numerical patterns across rows, columns and diagonals. The patterns must be 4 cells/squares or more in sequence (see patterns below). Bonus points are awarded for intersecting patterns (a.k.a. Nexus Cells).\n\n" +
 
 	"[font_size=20][b]Game Mechanics[/b][/font_size]\n" +
-	"The game starts with a pre-filled grid. There are four initial draws of 10 squares each to the player's hand. During each of these draws, the player can play up to 7 squares. When ready for the next draw, the player presses the \"Next Draw\" button. In the fifth and final draw, the player can play up to ten out of the ten squares drawn. When ready, the player presses the End Game button.\n\n" +
+	"The game starts with a pre-filled grid. There are four initial draws of 10 squares each to the player's hand. All squares drawn to the player's hand are Red, Green and Blue in color, since all color transformations are achieved by the adding of these three colors (see Color Transformations below). During each of these draws, the player can play up to 7 squares. When ready for the next draw, the player presses the \"Next Draw\" button. In the fifth and final draw, the player can play up to ten out of the ten squares drawn. When ready, the player presses the End Game button.\n\n" +
 
 	"[font_size=20][b]Color Transformations[/b][/font_size]\n" +
 	"Existing Color + Added Color = New Color\n" +
@@ -782,35 +782,43 @@ const ULTIMATE_HOW_TO_PLAY_BBCODE := (
 	"[b]Pyramid[/b]\n" +
 	"[indent]e.g. sequential or non-sequential (12321 or 47074)\n" +
 	"• Can only be 5 or 7 cells/squares in length\n" +
-	"• Repeating numbers allowed (e.g. 1213121)\n" +
-	"• Repeat numbers are not allowed consecutively (e.g. 12221 or 1211121 or 22122)\n" +
+	"• Repeating numbers are not allowed (e.g. 1213121)\n" +
 	"• Pyramid patterns must be both chromatic and numerical\n" +
-	"• Colors must correspond to numbers[/indent]\n" +
+	"• Colors must correspond to numbers; one color per each number[/indent]\n" +
 	"Pyramid Example:\n" +
-	"[indent]Red-1, Blue-2, Green-3, Blue-2, Red-1[/indent]\n\n" +
+	"[indent]Red-1, Blue-2, Green-3, Blue-2, Red-1[/indent]\n" +
+	"Not Allowed:\n" +
+	"[indent]Red-1, Yellow-2, Red-3, Green-4, Red-3, Yellow-2, Red-1\n" +
+	"• Cannot use the same color to correspond with more than one number[/indent]\n" +
+	"Allowed:\n" +
+	"[indent]Red-1, Yellow-2, Blue-3, Green-4, Blue-3, Yellow-2, Red-1[/indent]\n\n" +
 
 	"[b]Plateau[/b]\n" +
 	"[indent]e.g. sequential or non-sequential (123321 or 470074)\n" +
 	"• The same as a Pyramid, but the middle number must repeat at least once (e.g. 098890)\n" +
 	"• 6-cell/square minimum (e.g. 538835)\n" +
 	"• The middle number can repeat more than once (e.g. 1233321)\n" +
-	"• Repeating numbers allowed (e.g. 121121)\n" +
-	"• Repeat numbers are not allowed consecutively (e.g. 122221 or 112211)\n" +
+	"• Repeating numbers are not allowed (e.g. 121121), with the exception of the middle part of the pattern\n" +
 	"• Pyramid patterns must be both chromatic and numerical\n" +
-	"• Colors must correspond to numbers[/indent]\n" +
+	"• Colors must correspond to numbers, one color per each number[/indent]\n" +
 	"Plateau Example:\n" +
-	"[indent]Red-1, Blue-2, Green-3, Green-3, Blue-2, Red-1[/indent]\n\n" +
+	"[indent]Red-1, Blue-2, Green-3, Green-3, Blue-2, Red-1[/indent]\n" +
+	"Not Allowed:\n" +
+	"[indent]Green-1, Blue-2, Green-3, Green-3, Blue-2, Green-1\n" +
+	"• Cannot use the same color to correspond with more than one number[/indent]\n\n" +
 
 	"[b]Staircase[/b]\n" +
 	"[indent]e.g. sequential or non-sequential (122333 or 477000)\n" +
 	"• Must follow this pattern in forward or reverse (XYYZZZ or ZZZYYX)\n" +
 	"• Can only be 6 cells/squares in length\n" +
-	"• Repeating numbers allowed (e.g. 122111)\n" +
-	"• Repeating numbers are not allowed consecutively (e.g. 111222 or 122222)\n" +
+	"• Repeating numbers are not allowed (e.g. 122111)\n" +
 	"• Must be both chromatic and numerical\n" +
-	"• Colors must correspond to numbers[/indent]\n" +
+	"• Colors must correspond to numbers, one color per each number[/indent]\n" +
 	"Staircase Example:\n" +
-	"[indent]Red-1, Yellow-2, Yellow-2, Blue-3, Blue-3, Blue-3[/indent]\n\n" +
+	"[indent]Red-1, Yellow-2, Yellow-2, Blue-3, Blue-3, Blue-3[/indent]\n" +
+	"Not Allowed:\n" +
+	"[indent]Red-1, Yellow-2, Yellow-2, Red-3, Red-3, Red-3\n" +
+	"• Cannot use the same color to correspond with more than one number[/indent]\n\n" +
 
 	"[b]Full Spectrum[/b] (one of each color)\n" +
 	"[indent]e.g. ARYWBGP (Aqua, Red, Yellow, White, Blue, Green, Purple)\n" +

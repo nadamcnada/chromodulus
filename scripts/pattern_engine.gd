@@ -451,60 +451,101 @@ static func _is_doublet(numbers: Array, colors: Array) -> bool:
 	return _colors_consistent_with_numbers(numbers, colors)
 
 
-## A palindrome (numbers[i] == numbers[n-1-i]) with no two adjacent numbers
-## equal anywhere. Length is 5 or 7.
+## Stricter than _colors_consistent_with_numbers: also requires different
+## numbers to use different colors, so number<->color is a true one-to-one
+## correspondence. Used by Staircase, which has no palindrome structure to
+## check number-repetition separately (its three segments already can't
+## overlap), so this single check covers both rules at once.
+static func _colors_bijective_with_numbers(numbers: Array, colors: Array) -> bool:
+	var color_for_number: Dictionary = {}
+	var seen_colors: Dictionary = {}
+	for i in range(numbers.size()):
+		var num = numbers[i]
+		var col = colors[i]
+		if color_for_number.has(num):
+			if color_for_number[num] != col:
+				return false
+		else:
+			if seen_colors.has(col):
+				return false
+			color_for_number[num] = col
+			seen_colors[col] = true
+	return true
+
+
+## A palindrome (numbers[i] == numbers[n-1-i]) where every "slot" - each
+## mirrored pair, plus the unpaired center - uses its own number and its own
+## color; no number or color may be reused by a different slot. Length is
+## 5 or 7.
 static func _is_pyramid(numbers: Array, colors: Array) -> bool:
 	var n: int = numbers.size()
 	for i in range(n):
 		if numbers[i] != numbers[n - 1 - i]:
 			return false
-	for i in range(n - 1):
-		if numbers[i] == numbers[i + 1]:
+	for i in range(n):
+		if colors[i] != colors[n - 1 - i]:
 			return false
-	return _colors_consistent_with_numbers(numbers, colors)
+
+	var slot_count: int = (n + 1) / 2
+	var seen_numbers: Dictionary = {}
+	var seen_colors: Dictionary = {}
+	for i in range(slot_count):
+		if seen_numbers.has(numbers[i]):
+			return false
+		seen_numbers[numbers[i]] = true
+		if seen_colors.has(colors[i]):
+			return false
+		seen_colors[colors[i]] = true
+	return true
 
 
-## Same palindrome requirement as Pyramid, except the true center must repeat
-## with its neighbor(s) - for even length the two middle cells (already
-## forced equal by the palindrome itself), for odd length the middle cell
-## and at least one neighbor. No other adjacent repeats are allowed. Length
-## is 6 or 7.
+## Same as Pyramid, except the true center is required to repeat with its
+## neighbor(s) - for even length the two middle cells (already forced equal
+## by the palindrome itself), for odd length the middle cell and its
+## neighbor - and that repeated middle counts as a single slot (its number/
+## color only needs to be distinct from the *other* slots, not from itself).
+## Length is 6 or 7.
 static func _is_plateau(numbers: Array, colors: Array) -> bool:
 	var n: int = numbers.size()
 	for i in range(n):
 		if numbers[i] != numbers[n - 1 - i]:
 			return false
-
-	var exempt: Dictionary = {}
-	if n % 2 == 0:
-		exempt[n / 2 - 1] = true
-	else:
+	if n % 2 == 1:
 		var c: int = (n - 1) / 2
 		if numbers[c] != numbers[c - 1]:
 			return false
-		exempt[c - 1] = true
-		exempt[c] = true
-
-	for i in range(n - 1):
-		if not exempt.has(i) and numbers[i] == numbers[i + 1]:
+	for i in range(n):
+		if colors[i] != colors[n - 1 - i]:
 			return false
-	return _colors_consistent_with_numbers(numbers, colors)
+
+	var slot_count: int = n / 2
+	var seen_numbers: Dictionary = {}
+	var seen_colors: Dictionary = {}
+	for i in range(slot_count):
+		if seen_numbers.has(numbers[i]):
+			return false
+		seen_numbers[numbers[i]] = true
+		if seen_colors.has(colors[i]):
+			return false
+		seen_colors[colors[i]] = true
+	return true
 
 
 ## Exactly 6 cells matching [a,b,b,c,c,c] (forward) or [c,c,c,b,b,a]
-## (reverse), where a != b and b != c (a may equal c).
+## (reverse), where a, b and c are all different from each other (a can no
+## longer equal c).
 static func _is_staircase(numbers: Array, colors: Array) -> bool:
 	var forward_ok: bool = (
 		numbers[1] == numbers[2] and numbers[3] == numbers[4] and numbers[4] == numbers[5]
-		and numbers[0] != numbers[1] and numbers[1] != numbers[3]
+		and numbers[0] != numbers[1] and numbers[1] != numbers[3] and numbers[0] != numbers[3]
 	)
 	var reverse_ok: bool = (
 		numbers[0] == numbers[1] and numbers[1] == numbers[2] and numbers[3] == numbers[4]
-		and numbers[2] != numbers[3] and numbers[3] != numbers[5]
+		and numbers[2] != numbers[3] and numbers[3] != numbers[5] and numbers[2] != numbers[5]
 	)
 	if not (forward_ok or reverse_ok):
 		return false
-	return _colors_consistent_with_numbers(numbers, colors)
+	return _colors_bijective_with_numbers(numbers, colors)
 
 
 # ---------------------------------------------------------------------------

@@ -182,8 +182,6 @@ func _build_sidebar() -> Control:
 	return panel
 
 
-## Ultimate doesn't have its own Scoring System copy yet, so it borrows
-## Classic's until version-specific text is provided.
 func _on_scoring_pressed() -> void:
 	match _current_view:
 		"plus":
@@ -194,6 +192,8 @@ func _on_scoring_pressed() -> void:
 			info_dialog.open_with(GameText.ONE_LINER_PLUS_SCORING_SYSTEM_BBCODE)
 		"puzzle", "puzzle_3", "puzzle_4", "puzzle_5":
 			info_dialog.open_with(GameText.PUZZLE_SCORING_SYSTEM_BBCODE)
+		"ultimate":
+			info_dialog.open_with(GameText.ULTIMATE_SCORING_SYSTEM_BBCODE)
 		_:
 			info_dialog.open_with(GameText.CLASSIC_SCORING_SYSTEM_BBCODE)
 
